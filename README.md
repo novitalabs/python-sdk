@@ -1,12 +1,10 @@
 # novita Python SDK
 
-Thanks to the initial contribution of [@shanginn](https://github.com/shanginn), we have made the decision to create this SDK.
-
 this SDK is based on the official [API documentation](https://docs.novita.ai/)
 
 **join our discord server for help**
 
-[![](https://dcbadge.vercel.app/api/server/nzqq8UScpx)](https://discord.gg/nzqq8UScpx) 
+[![](https://dcbadge.vercel.app/api/server/Yjxn9rbV)](https://discord.gg/Yjxn9rbV) 
 
 ## Installation
 
