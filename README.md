@@ -6,6 +6,23 @@ this SDK is based on the official [API documentation](https://docs.novita.ai/)
 
 [![](https://dcbadge.vercel.app/api/server/Yjxn9rbV)](https://discord.gg/Yjxn9rbV) 
 
+## New APIs
+
+- [cleanup](./examples/cleanup.py) - remove all your generated images
+- [remove-background](./examples/remove-background.py) - remove background from image
+- [remove-text](./examples/remove-text.py) - remove text from image
+- [reimagine](./examples/reimagine.py) - reimagine image
+- [doodle](./examples/doodle.py) - doodle image
+- [merge-face](./examples/merge-face.py) - merge face
+- [mix-pose](./examples/mix-pose.py) - mix pose
+- [outpainting](./examples/outpainting.py) - outpainting
+- [replace-object](./examples/remove-object.py) - remove object
+- [replace-background](./examples/replace-background.py) - replace background
+- [replace-sky](./examples/replace-sky.py) - replace sky
+- [create-tile](./examples/create-tile.py) - create tile
+
+
+
 ## Installation
 
 ```bash
@@ -208,7 +225,6 @@ if res.data.status != ProgressResponseStatusCode.SUCCESSFUL:
 
 save_image(res.data.imgs_bytes[0], "txt2img-refiner.png")
 ```
-
 
 ## Testing
 

@@ -7,9 +7,11 @@ import base64
 import logging
 
 import requests
+from io import BytesIO
 
 from . import settings
 from .proto import *
+from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,17 @@ def read_image_to_base64(name):
         return base64.b64encode(f.read()).decode('utf-8')
 
 
+def image_to_base64(image: Image.Image) -> str:
+    buffered = BytesIO()
+    image.save(buffered, image.format)
+    return base64.b64encode(buffered.getvalue()).decode('ascii')
+
+def base64_to_image(base64_image: str) -> Image:
+    # convert base64 string to image
+    image = Image.open(BytesIO(base64.b64decode(base64_image)))
+    image = ImageOps.exif_transpose(image)
+    return image.convert("RGB")
+
 def add_lora_to_prompt(prompt: str, lora_name: str, weight: float = 1.0) -> str:
     prompt_split = [s.strip() for s in prompt.split(",")]
     ret = []
@@ -63,3 +76,23 @@ def add_lora_to_prompt(prompt: str, lora_name: str, weight: float = 1.0) -> str:
     if not replace:
         ret.append("<lora:{}:{}>".format(lora_name, weight))
     return ", ".join(ret)
+
+
+def input_image_to_base64(image) -> str:
+    if isinstance(image, str):
+        if os.path.exists(image):
+            return read_image_to_base64(image)
+
+        if image.startswith("http") or image.startswith("https"):
+            return base64.b64encode(batch_download_images([image])[0]).decode('ascii')
+
+        # assume it is a base64 string
+        return image
+
+
+    if isinstance(image, os.PathLike):
+        return read_image_to_base64(str(image))
+
+    if isinstance(image, Image.Image):
+        return image_to_base64(image)
+    raise ValueError("Unknown image type: {}".format(type(image)))

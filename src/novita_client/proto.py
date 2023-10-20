@@ -2,10 +2,13 @@
 # -*- coding: UTF-8 -*-
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Dict, Union
+import os
+from PIL import Image
 from .serializer import JSONe
 from enum import Enum
 from .utils import batch_download_images
+import base64
 
 
 # --------------- ControlNet ---------------
@@ -382,6 +385,300 @@ class UpscaleResponse(JSONe):
     msg: str
     data: Optional[UpscaleResponseData] = None
 
+# --------------- Cleanup ---------------
+
+
+@dataclass
+class CleanupRequest(JSONe):
+    image_file: str
+    mask_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class CleanupResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+InputImage = Union[str, os.PathLike, Image.Image]
+
+# --------------- Outpainting ---------------
+
+
+@dataclass
+class OutpaintingRequest(JSONe):
+    image_file: str
+    width: Optional[int] = 512
+    height: Optional[int] = 512
+    center_x: Optional[int] = 112
+    center_y: Optional[int] = 112
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class OutpaintingResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Remove Background ---------------
+
+
+@dataclass
+class RemoveBackgroundRequest(JSONe):
+    image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class RemoveBackgroundResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Remove Text ---------------
+
+
+@dataclass
+class RemoveTextRequest(JSONe):
+    image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class RemoveTextResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Reimage ---------------
+
+
+@dataclass
+class ReimagineRequest(JSONe):
+    image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class ReimagineResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Doodle ---------------
+
+
+@dataclass
+class DoodleRequest(JSONe):
+    image_file: str
+    prompt: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class DoodleResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+# --------------- Mix Pose ---------------
+
+@dataclass
+class MixPoseRequest(JSONe):
+    image_file: str
+    pose_image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class MixPoseResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+# --------------- Replace Background ---------------
+
+@dataclass
+class ReplaceBackgroundRequest(JSONe):
+    image_file: str
+    prompt: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class ReplaceBackgroundResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Replace Sky ---------------
+
+
+@dataclass
+class ReplaceSkyRequest(JSONe):
+    image_file: str
+    sky: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class ReplaceSkyResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Replace Object ---------------
+
+
+@dataclass
+class ReplaceObjectRequest(JSONe):
+    image_file: str
+    object_prompt: str
+    prompt: str
+    negative_prompt: Optional[str] = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class ReplaceObjectResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+# --------------- V3 Task Result ---------------
+# {
+#   "task": {
+#     "task_id": "a910c8f7-76ce-40bd-b805-f00f3ddd7dc1",
+#     "status": "TASK_STATUS_SUCCEED"
+#   },
+#   "images": [
+#     {
+#       "image_url": "https://faas-output-image.s3.ap-southeast-1.amazonaws.com/dev/replace_object_a910c8f7-76ce-40bd-b805-f00f3ddd7dc1_0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIASVPYCN6LRCW3SOUV%2F20231019%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Date=20231019T084537Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=b9ad40a5cb3aecf89602c15fe72d28be5d8a33e0bfe3656ce968295fde1aab31",
+#       "image_type": "png",
+#       "image_url_ttl": 3600
+#     }
+#   ]
+# }
+
+@dataclass
+class V3TaskImage(JSONe):
+    image_url: str
+    image_type: str
+    image_url_ttl: int
+
+
+class V3TaskResponseStatus(Enum):
+    TASK_STATUS_SUCCEED = "TASK_STATUS_SUCCEED"
+    TASK_STATUS_QUEUED = "TASK_STATUS_QUEUED"
+    TASK_STATUS_FAILED = "TASK_STATUS_FAILED"
+
+
+@dataclass
+class V3AsyncSubmitResponse(JSONe):
+    task_id: str
+
+
+@dataclass
+class V3TaskResponseTask(JSONe):
+    task_id: str
+    status: V3TaskResponseStatus
+
+
+@dataclass
+class V3TaskResponse(JSONe):
+    task: V3TaskResponseTask
+    images: List[V3TaskImage] = None
+
+    def finished(self):
+        return self.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED or self.task.status == V3TaskResponseStatus.TASK_STATUS_FAILED
+
+    def get_image_urls(self):
+        return [image.image_url for image in self.images]
+
+    def download_images(self):
+        if self.images is not None and len(self.images) > 0:
+            self.images_encoded = [base64.b64encode(_).decode('ascii') for _ in batch_download_images(self.get_image_urls())]
+
+# --------------- Restore Faces ---------------
+
+
+@dataclass
+class RestoreFaceRequest(JSONe):
+    image_file: str
+    fidelity: Optional[float] = 0.7
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class RestoreFaceResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+# --------------- Tile ---------------
+@dataclass
+class CreateTileRequest(JSONe):
+    prompt: str
+    negative_prompt: Optional[str] = None
+    width: Optional[int] = 1024
+    height: Optional[int] = 1024
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class CreateTileResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Merge Face ---------------
+
+
+@dataclass
+class MergeFaceRequest(JSONe):
+    image_file: str
+    face_image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class MergeFaceResponse(JSONe):
+    image_file: str
+    image_type: str
 
 # --------------- Model ---------------
 
