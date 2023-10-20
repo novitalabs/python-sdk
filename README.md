@@ -31,7 +31,7 @@ pip install novita-client
 
 ## Quick Start
 
-**Get api key refer to [https://docs.novita.ai/get-started](https://docs.novita.ai/get-started/)**
+**Get api key refer to [https://novita.ai/get-started/](https://novita.ai/get-started/)**
 
 ```python
 import os
