@@ -286,7 +286,7 @@ class NovitaClient:
         image_b64 = input_image_to_base64(image)
         mask_b64 = input_image_to_base64(mask)
         request = CleanupRequest(image_file=image_b64, mask_file=mask_b64)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -305,7 +305,7 @@ class NovitaClient:
         if center_y is not None:
             request.center_y = center_y
 
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -316,7 +316,7 @@ class NovitaClient:
     def remove_background(self, image: InputImage, response_image_type=None) -> RemoveBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = RemoveBackgroundRequest(image_file=image_b64)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -326,7 +326,7 @@ class NovitaClient:
     def remove_text(self, image: InputImage, response_image_type=None) -> RemoveTextResponse:
         image_b64 = input_image_to_base64(image)
         request = RemoveTextRequest(image_file=image_b64)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -336,17 +336,20 @@ class NovitaClient:
     def reimagine(self, image: InputImage, response_image_type=None) -> ReimagineResponse:
         image_b64 = input_image_to_base64(image)
         request = ReimagineRequest(image_file=image_b64)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
 
         return ReimagineResponse.from_dict(self._post('/v3/reimagine', request.to_dict()))
 
-    def doodle(self, image: InputImage, prompt: str, response_image_type=None) -> DoodleResponse:
+    def doodle(self, image: InputImage, prompt: str, similarity: float = None, response_image_type=None) -> DoodleResponse:
         image_b64 = input_image_to_base64(image)
         request = DoodleRequest(image_file=image_b64, prompt=prompt)
-        if response_image_type is None:
+        if similarity is not None:
+            request.similarity = similarity
+
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -357,7 +360,7 @@ class NovitaClient:
         image_b64 = input_image_to_base64(image)
         pose_image_b64 = input_image_to_base64(pose_image)
         request = MixPoseRequest(image_file=image_b64, pose_image_file=pose_image_b64)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -367,7 +370,7 @@ class NovitaClient:
     def replace_background(self, image: InputImage, prompt: str, response_image_type=None) -> ReplaceBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceBackgroundRequest(image_file=image_b64, prompt=prompt)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -376,7 +379,7 @@ class NovitaClient:
     def replace_sky(self, image: InputImage, sky: str, response_image_type=None) -> ReplaceSkyResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceSkyRequest(image_file=image_b64, sky=sky)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -394,7 +397,7 @@ class NovitaClient:
     def async_replace_object(self, image: InputImage, object_prompt: str, prompt: str, negative_prompt=None, response_image_type=None) -> ReplaceObjectResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceObjectRequest(image_file=image_b64, object_prompt=object_prompt, prompt=prompt, negative_prompt=negative_prompt)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -405,7 +408,7 @@ class NovitaClient:
         request = RestoreFaceRequest(image_file=image_b64)
         if fidelity is not None:
             request.fidelity = fidelity
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -419,7 +422,7 @@ class NovitaClient:
             request.width = width
         if height is not None:
             request.height = height
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -429,7 +432,7 @@ class NovitaClient:
         input_image = input_image_to_base64(image)
         face_image = input_image_to_base64(face_image)
         request = MergeFaceRequest(image_file=input_image, face_image_file=face_image)
-        if response_image_type is None:
+        if response_image_type is not None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)

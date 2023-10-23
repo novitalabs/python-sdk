@@ -52,16 +52,22 @@ def read_image_to_base64(name):
         return base64.b64encode(f.read()).decode('utf-8')
 
 
-def image_to_base64(image: Image.Image) -> str:
+def image_to_base64(image: Image.Image, format=None) -> str:
     buffered = BytesIO()
-    image.save(buffered, image.format)
+    if format is None:
+        format = image.format
+        if not format:
+            format = "PNG"
+    image.save(buffered, format)
     return base64.b64encode(buffered.getvalue()).decode('ascii')
+
 
 def base64_to_image(base64_image: str) -> Image:
     # convert base64 string to image
     image = Image.open(BytesIO(base64.b64decode(base64_image)))
     image = ImageOps.exif_transpose(image)
     return image.convert("RGB")
+
 
 def add_lora_to_prompt(prompt: str, lora_name: str, weight: float = 1.0) -> str:
     prompt_split = [s.strip() for s in prompt.split(",")]
@@ -88,7 +94,6 @@ def input_image_to_base64(image) -> str:
 
         # assume it is a base64 string
         return image
-
 
     if isinstance(image, os.PathLike):
         return read_image_to_base64(str(image))

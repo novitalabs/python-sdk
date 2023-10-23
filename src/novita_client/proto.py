@@ -414,8 +414,8 @@ class OutpaintingRequest(JSONe):
     image_file: str
     width: Optional[int] = 512
     height: Optional[int] = 512
-    center_x: Optional[int] = 112
-    center_y: Optional[int] = 112
+    center_x: Optional[int] = 0
+    center_y: Optional[int] = 0
     extra: Dict = field(default_factory=lambda: dict())
 
     def set_image_type(self, image_type: str):
@@ -485,6 +485,7 @@ class ReimagineResponse(JSONe):
 class DoodleRequest(JSONe):
     image_file: str
     prompt: str
+    similarity: float = None
     extra: Dict = field(default_factory=lambda: dict())
 
     def set_image_type(self, image_type: str):
