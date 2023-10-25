@@ -6,7 +6,7 @@ import os
 from novita_client import *
 
 # get your api key refer to https://docs.novita.ai/get-started/
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 controlnet_model = client.models().filter_by_type(ModelType.CONTROLNET).get_by_name("control_v1p_sd15_qrcode_monster_v2")
 if controlnet_model is None:

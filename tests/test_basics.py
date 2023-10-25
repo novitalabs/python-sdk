@@ -10,7 +10,7 @@ import pytest
 
 @pytest.mark.dependency()
 def test_txt2img_sync():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_txt2img(Txt2ImgRequest(
         prompt='a dog flying in the sky',
         batch_size=1,
@@ -31,7 +31,7 @@ def test_txt2img_sync():
 
 @pytest.mark.dependency(depends=['test_txt2img_sync'])
 def test_img2img_sync():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     init_image = os.path.join(os.path.abspath(
         os.path.dirname(__name__)), "tests/data/test_txt2img_sync.png")
     init_image_base64 = read_image_to_base64(init_image)
@@ -57,12 +57,12 @@ def test_img2img_sync():
 
 @pytest.mark.dependency(depends=['test_img2img_sync'])
 def test_txt2img_controlnet():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     init_image = os.path.join(os.path.abspath(os.path.dirname(
         __name__)), "tests/data/test_txt2img_sync.png")
     init_image_base64 = read_image_to_base64(init_image)
 
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     request = Txt2ImgRequest(
         prompt='a dog flying in the sky',
         batch_size=1,
@@ -94,7 +94,7 @@ def test_txt2img_controlnet():
 
 @pytest.mark.dependency(depends=['test_img2img_sync'])
 def test_img2img_controlnet():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     init_image = os.path.join(os.path.abspath(
         os.path.dirname(__name__)), "tests/data/test_txt2img_sync.png")
     init_image_base64 = read_image_to_base64(init_image)
@@ -129,7 +129,7 @@ def test_img2img_controlnet():
 
 
 def test_txt2img_upscale_2x():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_txt2img(Txt2ImgRequest(
         model_name='dreamshaper_8_93211.safetensors',
         prompt='a dog flying in the sky',
@@ -154,7 +154,7 @@ def test_txt2img_upscale_2x():
 
 
 def test_txt2img_upscale_specify_size():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_txt2img(Txt2ImgRequest(
         model_name='dreamshaper_8_93211.safetensors',
         prompt='a dog flying in the sky',
@@ -180,7 +180,7 @@ def test_txt2img_upscale_specify_size():
 
 
 def test_upscale_2x():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_img2img(Img2ImgRequest(
         model_name='dreamshaper_8_93211.safetensors',
         prompt='a dog flying in the sky',
@@ -208,7 +208,7 @@ def test_upscale_2x():
 
 
 def test_upscale_specify_size():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_img2img(Img2ImgRequest(
         model_name='dreamshaper_8_93211.safetensors',
         prompt='a dog flying in the sky',
@@ -237,7 +237,7 @@ def test_upscale_specify_size():
 
 
 def test_upscale_multiple_upscaler():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_img2img(Img2ImgRequest(
         model_name='dreamshaper_8_93211.safetensors',
         prompt='a dog flying in the sky',
@@ -269,7 +269,7 @@ def test_upscale_multiple_upscaler():
 
 
 def test_txt2img_custom_headers():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     client.set_extra_headers({"User-Agent": "test-custom-user-agent"})
 
     res = client.sync_img2img(Img2ImgRequest(
@@ -287,7 +287,7 @@ def test_txt2img_custom_headers():
 
 
 def test_txt2img_with_callback():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
     def callback(res: ProgressResponse):
         assert isinstance(res.data.progress, float)
@@ -307,7 +307,7 @@ def test_txt2img_with_callback():
 
 
 def test_txt2img_sdxl_with_refiner():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_txt2img(Txt2ImgRequest(
         model_name='sd_xl_base_1.0.safetensors',
         prompt='a dog flying in the sky',
@@ -334,7 +334,7 @@ def test_txt2img_sdxl_with_refiner():
 
 
 def test_img2img_sdxl_with_refiner():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     res = client.sync_txt2img(Txt2ImgRequest(
         model_name='sd_xl_base_1.0.safetensors',
         prompt='a dog flying in the sky',

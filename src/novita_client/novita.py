@@ -21,8 +21,10 @@ logger = logging.getLogger(__name__)
 class NovitaClient:
     """NovitaClient is the main entry point for interacting with the Novita API."""
 
-    def __init__(self, api_key):
-        self.base_url = "https://api.novita.ai"
+    def __init__(self, api_key, base_url=None):
+        self.base_url = base_url
+        if self.base_url is None:
+            self.base_url = "https://api.novita.ai"
         self.api_key = api_key
         self.session = requests.Session()
 
@@ -437,6 +439,20 @@ class NovitaClient:
         else:
             request.set_image_type(response_image_type)
         return MergeFaceResponse.from_dict(self._post('/v3/merge-face', request.to_dict()))
+
+    def lcm_txt2img(self, prompt: str, width=None, height=None, steps=None, guidance_scale=None, image_num=None) -> LCMTxt2ImgResponse:
+        req = LCMTxt2ImgRequest(prompt=prompt)
+        if width is not None:
+            req.width = width
+        if height is not None:
+            req.height = height
+        if steps is not None:
+            req.steps = steps
+        if guidance_scale is not None:
+            req.guidance_scale = guidance_scale
+        if image_num is not None:
+            req.image_num = image_num
+        return LCMTxt2ImgResponse.from_dict(self._post('/v3/lcm-txt2img', req.to_dict()))
 
     def models(self, refresh=False) -> ModelList:
         """Get list of models

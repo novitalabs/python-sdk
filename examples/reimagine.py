@@ -3,7 +3,7 @@ import os
 from novita_client import NovitaClient
 from novita_client.utils import base64_to_image
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 res = client.reimagine(
     image="https://madera.objects.liquidweb.services/photos/20371-yosemite-may-yosemite-falls-waterfalls-cooks-meadow-spring-2023-Rectangle-600x400.jpg"
 )

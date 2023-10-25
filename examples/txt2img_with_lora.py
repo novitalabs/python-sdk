@@ -5,7 +5,7 @@ import os
 from novita_client import NovitaClient, Txt2ImgRequest, Samplers, ProgressResponseStatusCode, ModelType, add_lora_to_prompt, save_image
 
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 res = client.sync_txt2img(Txt2ImgRequest(
     prompt="modern american comic about superman vs batman, digital color comicbook style, Batman jumps out of the way as Superman charges towards him, but Superman quickly recovers and delivers a powerful kick",

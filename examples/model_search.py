@@ -3,7 +3,7 @@
 
 from novita_client import NovitaClient, ModelType
 # get your api key refer to https://docs.novita.ai/get-started/
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 # filter by model type
 print("lora count", len(client.models().filter_by_type(ModelType.LORA)))

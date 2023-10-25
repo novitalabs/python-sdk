@@ -681,6 +681,28 @@ class MergeFaceResponse(JSONe):
     image_file: str
     image_type: str
 
+# --------------- LCM Txt2Img ---------------
+
+
+@dataclass
+class LCMTxt2ImgRequest(JSONe):
+    prompt: str
+    height: Optional[int] = 512
+    width: Optional[int] = 512
+    image_num: Optional[int] = 4
+    steps: Optional[int] = 4
+    guidance_scale: Optional[float] = 7.5
+
+@dataclass
+class LCMTxt2ImgResponseImage(JSONe):
+    image_file: str
+    image_type: str
+
+@dataclass
+class LCMTxt2ImgResponse(JSONe):
+    images: List[LCMTxt2ImgResponseImage]
+
+
 # --------------- Model ---------------
 
 

@@ -3,7 +3,7 @@ import os
 
 
 def test_model_api():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
     models = client.models()
     assert all([m.civitai_nsfw is True for m in models.filter_by_nsfw(True)])
     assert all([m.civitai_nsfw is False for m in models.filter_by_nsfw(False)])

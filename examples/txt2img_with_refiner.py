@@ -2,7 +2,7 @@ import os
 
 from novita_client import *
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 req = Txt2ImgRequest(
     model_name='sd_xl_base_1.0.safetensors',
     prompt='a dog flying in the sky',

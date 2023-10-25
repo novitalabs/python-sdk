@@ -8,6 +8,7 @@ this SDK is based on the official [API documentation](https://docs.novita.ai/)
 
 ## New APIs
 
+- [latent-consistency-txt2img](./examples/latent-consistency-txt2img.py) - latent consistency txt2img [based on this paper](https://latent-consistency-models.github.io/)
 - [cleanup](./examples/cleanup.py) - remove all your generated images
 - [remove-background](./examples/remove-background.py) - remove background from image
 - [remove-text](./examples/remove-text.py) - remove text from image
@@ -37,7 +38,7 @@ pip install novita-client
 import os
 from novita_client import NovitaClient, Txt2ImgRequest, Samplers, ModelType, save_image
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 req = Txt2ImgRequest(
     model_name='sd_xl_base_1.0.safetensors',
@@ -63,7 +64,7 @@ import os
 from novita_client import NovitaClient, Txt2ImgRequest, Samplers, ProgressResponseStatusCode, ModelType, add_lora_to_prompt, save_image
 
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 models = client.models()
 
 # Anything V5/Ink, https://civitai.com/models/9409/or-anything-v5ink
@@ -96,7 +97,7 @@ save_image(res.data.imgs_bytes[0], "test.png")
 ```python
 from novita_client import NovitaClient, ModelType
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 # filter by model type
 print("lora count", len(client.models().filter_by_type(ModelType.LORA)))
@@ -133,7 +134,7 @@ import os
 from novita_client import *
 
 # get your api key refer to https://docs.novita.ai/get-started/
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 controlnet_model = client.models().filter_by_type(ModelType.CONTROLNET).get_by_name("control_v1p_sd15_qrcode_monster_v2")
 if controlnet_model is None:
@@ -174,7 +175,7 @@ import os
 
 from novita_client import *
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 req = Txt2ImgRequest(
     model_name='dreamshaper_8_93211.safetensors',
     prompt='a dog flying in the sky',
@@ -204,7 +205,7 @@ import os
 
 from novita_client import *
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 req = Txt2ImgRequest(
     model_name='sd_xl_base_1.0.safetensors',
     prompt='a dog flying in the sky',
