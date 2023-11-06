@@ -13,5 +13,4 @@ charset-normalizer==3.2.0
 dataclass-wizard==0.22.2
 idna==3.4
 requests==2.31.0
-typing-extensions==4.7.1
 urllib3==2.0.4

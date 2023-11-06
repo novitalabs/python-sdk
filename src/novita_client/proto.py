@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Any
 import os
 from PIL import Image
 from .serializer import JSONe
@@ -147,7 +147,7 @@ class Txt2ImgRequest(JSONe):
     seed: Optional[int] = -1
     restore_faces: Optional[bool] = False
     sd_vae: Optional[str] = None
-    clip_skip: Optional[int] = 1
+    clip_skip: Optional[int] = None
 
     controlnet_units: Optional[List[ControlnetUnit]] = None
     controlnet_no_detectmap: Optional[bool] = False
@@ -222,7 +222,7 @@ class Img2ImgRequest(JSONe):
     height: Optional[int] = 1024
     restore_faces: Optional[bool] = False
     sd_vae: Optional[str] = None
-    clip_skip: Optional[int] = 1
+    clip_skip: Optional[int] = None
 
     controlnet_units: Optional[List[ControlnetUnit]] = None
     controlnet_no_detectmap: Optional[bool] = False
@@ -693,14 +693,223 @@ class LCMTxt2ImgRequest(JSONe):
     steps: Optional[int] = 4
     guidance_scale: Optional[float] = 7.5
 
+
 @dataclass
 class LCMTxt2ImgResponseImage(JSONe):
     image_file: str
     image_type: str
 
+
 @dataclass
 class LCMTxt2ImgResponse(JSONe):
     images: List[LCMTxt2ImgResponseImage]
+
+# --------------- ADEtailer ---------------
+
+
+class ADETailerResponseCode(Enum):
+    NORMAL = 0
+    INTERNAL_ERROR = -1
+    INVALID_JSON = 1
+    MODEL_NOT_EXISTS = 2
+    TASK_ID_NOT_EXISTS = 3
+    INVALID_AUTH = 4
+    HOST_UNAVAILABLE = 5
+    PARAM_RANGE_ERROR = 6
+    COST_BALANCE_ERROR = 7
+    SAMPLER_NOT_EXISTS = 8
+    TIMEOUT = 9
+
+    UNKNOWN = 100
+
+    @classmethod
+    def _missing_(cls, number):
+        return cls(cls.UNKNOWN)
+
+
+@dataclass
+class ADETailerRequest(JSONe):
+    model_name: str
+    input_image: str
+    prompt: str
+    steps: Optional[int] = 20
+    strength: Optional[float] = 0.3
+    negative_prompt: Optional[str] = None
+    vae: Optional[str] = None
+    seed: Optional[int] = None
+    clip_skip: Optional[int] = None
+
+
+@dataclass
+class ADETailerResponseData(JSONe):
+    task_id: str
+    warn: Optional[str] = None
+
+
+@dataclass
+class ADETailerResponse(JSONe):
+    code: ADETailerResponseCode
+    msg: str
+    data: Optional[ADETailerResponseData] = None
+
+
+# --------------- Training ---------------
+
+
+@dataclass
+class UploadAssetRequest(JSONe):
+    file_extension: str = "png"
+
+
+@dataclass
+class UploadAssetResponse(JSONe):
+    upload_url: str
+    method: str
+    assets_id: str
+
+
+@dataclass
+class TrainingImageDatasetItem(JSONe):
+    assets_id: str
+
+
+@dataclass
+class TrainingExpertSetting(JSONe):
+    instance_prompt: str
+    class_prompt: str
+    max_train_steps: int
+    learning_rate: str = None
+    seed: int = None
+    lr_scheduler: str = None
+    with_prior_preservation: bool = None
+    prior_loss_weight: float = None
+    lora_r: int = None
+    lora_alpha: int = None
+    lora_text_encoder_r: int = None
+    lora_text_encoder_alpha: int = None
+
+
+@dataclass
+class TrainingComponent(JSONe):
+    name: str
+    args: List[Dict[str, Any]]
+
+
+FACE_TRAINING_DEFAULT_COMPONENTS = [
+    TrainingComponent(
+        name="face_crop_region",
+        args=[{
+            "name": "ratio",
+            "value": "1"
+        }]
+    ),
+    TrainingComponent(
+        name="resize",
+        args=[
+            {
+                "name": "height",
+                "value": "512",
+            },
+            {
+                "name": "width",
+                "value": "512",
+            }
+        ]
+    ),
+    TrainingComponent(
+        name="face_restore",
+        args=[
+            {
+                "name": "method",
+                "value": "gfpgan_1.4"
+            },
+            {
+                "name": "upscale",
+                "value": "1.0"
+            }
+        ]
+    ),
+]
+
+
+@dataclass
+class CreateTrainingSubjectRequest(JSONe):
+    name: str
+    base_model: str
+    image_dataset_items: List[TrainingImageDatasetItem]
+    width: int = 512
+    height: int = 512
+    expert_setting: TrainingExpertSetting = None
+    components: List[TrainingComponent] = None
+
+
+@dataclass
+class CreateTrainingSubjectResponse(JSONe):
+    task_id: str
+
+
+@dataclass
+class QueryTrainingSubjectModel(JSONe):
+    model_name: str
+    model_status: str
+
+
+@dataclass
+class QueryTrainingSubjectStatusResponse(JSONe):
+    task_id: str
+    task_status: str
+    model_type: str
+    models: List[QueryTrainingSubjectModel]
+
+
+@dataclass
+class TrainingTaskInfoModel(JSONe):
+    model_name: str
+    model_status: str
+
+
+@dataclass
+class TrainingTaskInfo(JSONe):
+    task_name: str
+    task_id: str
+    task_type: str
+    task_status: str
+    created_at: int
+    models: List[TrainingTaskInfoModel]
+
+
+@dataclass
+class TrainingTaskPagination(JSONe):
+    next_cursor: Optional[str] = None
+
+
+@dataclass
+class TrainingTaskListResponse(JSONe):
+    tasks: List[TrainingTaskInfo] = field(default_factory=lambda: [])
+    pagination: TrainingTaskPagination = None
+
+
+class TrainingTaskList(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_by_task_name(self, task_name: str):
+        for task in self:
+            if task.task_name == task_name:
+                return task
+        return None
+
+    def filter_by_task_type(self, task_type: str):
+        return TrainingTaskList([task for task in self if task.task_type == task_type])
+
+    def filter_by_task_status(self, task_status: str):
+        return TrainingTaskList([task for task in self if task.task_status == task_status])
+
+    def filter_by_model_status(self, model_status: str):
+        return TrainingTaskList([task for task in self if any(model.model_status == model_status for model in task.models)])
+
+    def sort_by_created_at(self):
+        return TrainingTaskList(sorted(self, key=lambda x: x.created_at, reverse=True))
 
 
 # --------------- Model ---------------
@@ -767,7 +976,7 @@ class ModelInfo(JSONe):
     civitai_comment_count: Optional[int] = 0
     civitai_rating_count: Optional[int] = 0
     civitai_rating: Optional[float] = 0.0
-    Novita_used_count: Optional[int] = None
+    novita_used_count: Optional[int] = None
     civitai_image_url:  Optional[str] = None
     civitai_image_nsfw:  Optional[bool] = False
     civitai_origin_image_url:  Optional[str] = None
@@ -856,3 +1065,91 @@ class ModelList(list):
 
     def sort_by_civitai_comment(self):
         return ModelList(sorted(self, key=lambda x: x.civitai_comment, reverse=True))
+
+
+# --------------- Model V3 ---------------
+
+@dataclass
+class ModelInfoTypeV3(JSONe):
+    name: str
+    display_name: str
+
+
+class ModelInfoStatus(Enum):
+    UNAVAILABLE = 0
+    AVAILABLE = 1
+
+
+@dataclass
+class ModelInfoV3(JSONe):
+    id: int
+    name: str
+    sd_name: str
+    type: ModelInfoTypeV3
+    status: ModelInfoStatus
+    hash_sha256: Optional[str] = None
+    categories: Optional[List[str]] = None
+    download_url: Optional[str] = None
+    base_model: Optional[str] = None
+    source: Optional[str] = None
+    download_url_ttl: Optional[int] = None
+    sd_name_in_api: Optional[str] = None
+    is_nsfw: Optional[bool] = None
+    visibility: Optional[str] = None
+    cover_url: Optional[str] = None
+
+
+class ModelListV3(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_by_name(self, name):
+        for model in self:
+            if model.name == name:
+                return model
+        return None
+
+    def get_by_sd_name(self, sd_name):
+        for model in self:
+            if model.sd_name == sd_name:
+                return model
+        return None
+
+    def filter_by_type(self, type):
+        return ModelListV3([model for model in self if model.type.name == type])
+
+    def filter_by_nsfw(self, nsfw: bool):
+        return ModelListV3([model for model in self if model.is_nsfw == nsfw])
+
+    def filter_by_status(self, status: ModelInfoStatus):
+        return ModelListV3([model for model in self if model.status == status])
+
+    def filter_by_source(self, source: str):
+        return ModelListV3([model for model in self if model.source == source])
+
+    def filter_by_visibility(self, visibility: str):
+        return ModelListV3([model for model in self if model.visibility == visibility])
+
+    def filter_by_available(self, available: bool):
+        return ModelListV3([model for model in self if model.status == ModelInfoStatus.AVAILABLE])
+
+    def sort_by_name(self):
+        return ModelListV3(sorted(self, key=lambda x: x.name))
+
+
+@dataclass
+class ModelsPaginationV3(JSONe):
+    next_cursor: Optional[str] = None
+
+
+@dataclass
+class MoodelsResponseV3(JSONe):
+    models: List[ModelInfoV3] = None
+    pagination: ModelsPaginationV3 = None
+
+
+# --------------- User Info ---------------
+@dataclass
+class UserInfoResponse(JSONe):
+    allow_features: List[str] = None
+    credit_balance: int = 0

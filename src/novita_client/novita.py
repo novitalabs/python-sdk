@@ -12,7 +12,8 @@ from .proto import *
 
 import requests
 from . import settings
-from .utils import input_image_to_base64
+from .utils import input_image_to_base64, input_image_to_pil
+from io import BytesIO
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ class NovitaClient:
 
         # eg: {"all": [proto.ModelInfo], "checkpoint": [proto.ModelInfo], "lora": [proto.ModelInfo]}
         self._model_list_cache = None
+        self._model_list_cache_v3 = None
         self._extra_headers = {}
         self._default_response_image_type = "jpeg"
 
@@ -61,7 +63,7 @@ class NovitaClient:
             timeout=settings.DEFAULT_REQUEST_TIMEOUT,
         )
 
-        logger.debug(f"[GET] response: {response.content}")
+        logger.debug(f"[GET] {self.base_url + api_path}, headers: {headers} response: {response.content}")
         if response.status_code != 200:
             logger.error(f"Request failed: {response}")
             raise NovitaResponseError(
@@ -79,7 +81,7 @@ class NovitaClient:
         }
         headers.update(self._extra_headers)
 
-        logger.debug(f"[POST] data: {data}")
+        logger.debug(f"[POST] {self.base_url + api_path}, headers: {headers} data: {data}")
 
         response = self.session.post(
             self.base_url + api_path,
@@ -284,6 +286,37 @@ class NovitaClient:
 
         return UpscaleResponse.from_dict(response)
 
+    def adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None,  download_images=True, callback: callable = None) -> ProgressResponse:
+        response = self.async_adetailer(model_name, image, prompt, steps, strength, negative_prompt, vae, seed, clip_skip)
+        if response.data is None:
+            raise NovitaResponseError(f"Upscale failed with response {response.msg}, code: {response.code}")
+
+        res = self.wait_for_task(response.data.task_id, callback=callback)
+        if download_images:
+            res.download_images()
+        return res
+
+    def async_adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None) -> ProgressResponse:
+        image_b64 = input_image_to_base64(image)
+        request = ADETailerRequest(
+            model_name=model_name,
+            input_image=image_b64,
+            prompt=prompt,
+        )
+        if steps is not None:
+            request.steps = steps
+        if strength is not None:
+            request.strength = strength
+        if negative_prompt is not None:
+            request.negative_prompt = negative_prompt
+        if vae is not None:
+            request.vae = vae
+        if seed is not None:
+            request.seed = seed
+        if clip_skip is not None:
+            request.clip_skip = clip_skip
+        return ADETailerResponse.from_dict(self._post('/v2/adetailer', request.to_dict()))
+
     def cleanup(self, image: InputImage, mask: InputImage, response_image_type=None) -> CleanupResponse:
         image_b64 = input_image_to_base64(image)
         mask_b64 = input_image_to_base64(mask)
@@ -454,6 +487,96 @@ class NovitaClient:
             req.image_num = image_num
         return LCMTxt2ImgResponse.from_dict(self._post('/v3/lcm-txt2img', req.to_dict()))
 
+    def upload_assets(self, images: List[InputImage]) -> List[str]:
+        ret = []
+        for image in images:
+            pil_image = input_image_to_pil(image)
+            buff = BytesIO()
+            if pil_image.format != "JPEG":
+                pil_image = pil_image.convert("RGB")
+                pil_image.save(buff, format="JPEG")
+            else:
+                pil_image.save(buff, format="JPEG")
+
+            upload_res: UploadAssetResponse = UploadAssetResponse.from_dict(self._post("/v3/assets/training_dataset", UploadAssetRequest(file_extension="jpeg").to_dict()))
+            res = requests.put(upload_res.upload_url, data=buff.getvalue(), headers={'Content-type': 'image/jpeg'})
+            if res.status_code != 200:
+                raise NovitaResponseError(f"Failed to upload image: {res.content}")
+            ret.append(upload_res.assets_id)
+        return ret
+
+    def create_training_subject(self, name,
+                                base_model,
+                                images: List[InputImage],
+                                instance_prompt: str,
+                                class_prompt: str,
+                                width: int = 512,
+                                height: int = 512,
+                                learning_rate: str = None,
+                                seed: int = None,
+                                lr_scheduler: str = None,
+                                with_prior_preservation: bool = None,
+                                prior_loss_weight: float = None,
+                                lora_r: int = None,
+                                lora_alpha: int = None,
+                                max_train_steps: str = None,
+                                lora_text_encoder_r: int = None,
+                                lora_text_encoder_alpha: int = None,
+                                components=None) -> str:
+        assets = self.upload_assets(images)
+        req = CreateTrainingSubjectRequest(
+            name=name,
+            base_model=base_model,
+            image_dataset_items=[TrainingImageDatasetItem(assets_id=assets_id) for assets_id in assets],
+            expert_setting=TrainingExpertSetting(
+                instance_prompt=instance_prompt,
+                class_prompt=class_prompt,
+                max_train_steps=max_train_steps,
+                learning_rate=learning_rate,
+                seed=seed,
+                lr_scheduler=lr_scheduler,
+                with_prior_preservation=with_prior_preservation,
+                prior_loss_weight=prior_loss_weight,
+                lora_r=lora_r,
+                lora_alpha=lora_alpha,
+                lora_text_encoder_r=lora_text_encoder_r,
+                lora_text_encoder_alpha=lora_text_encoder_alpha,
+            ),
+            components=[_.to_dict() for _ in components],
+            width=width,
+            height=height,
+        )
+        res = CreateTrainingSubjectResponse.from_dict(self._post("/v3/training/subject", req.to_dict()))
+        return res.task_id
+
+    def query_training_subject_status(self, task_id: str) -> QueryTrainingSubjectStatusResponse:
+        return QueryTrainingSubjectStatusResponse.from_dict(self._get("/v3/training/subject", params={"task_id": task_id}))
+
+    def list_training(self) -> TrainingTaskList:
+        return TrainingTaskList(TrainingTaskListResponse.from_dict(self._get("/v3/training")).tasks)
+
+    def user_info(self) -> UserInfoResponse:
+        return UserInfoResponse.from_dict(self._get("/v3/user"))
+
+    def models_v3(self, refresh=False) -> ModelListV3:
+        if self._model_list_cache_v3 is None or len(self._model_list_cache_v3) == 0 or refresh:
+            visibilities = ["public", "private"]
+            ret = []
+            for visibilitiy in visibilities:
+                offset = 0
+                page_size = 100
+                while True:
+                    res = self._get('/v3/model', params={"pagination.cursor": f"c_{offset}", "pagination.limit": page_size, "filter.visibility": visibilitiy})
+                    model_response: MoodelsResponseV3 = MoodelsResponseV3.from_dict(res)
+                    for i in range(len(model_response.models)):
+                        model_response.models[i].visibility = visibilitiy
+                    ret.extend(model_response.models)
+                    if model_response.models is None or len(model_response.models) == 0 or len(model_response.models) < page_size:
+                        break
+                    offset += page_size
+            self._model_list_cache_v3 = ModelListV3(ret)
+        return self._model_list_cache_v3
+
     def models(self, refresh=False) -> ModelList:
         """Get list of models
 
@@ -470,12 +593,12 @@ class NovitaClient:
         """
 
         if (self._model_list_cache is None or len(self._model_list_cache) == 0) or refresh:
-            res = self._get('/models')
+            res = self._get('/v2/models')
 
             # TODO: fix this
             res_controlnet = self._get(
-                '/models', params={'type': 'controlnet'})
-            res_vae = self._get('/models', params={'type': 'vae'})
+                '/v2/models', params={'type': 'controlnet'})
+            res_vae = self._get('/v2/models', params={'type': 'vae'})
 
             tmp = []
             tmp.extend(MoodelsResponse.from_dict(res).data.models)
