@@ -85,19 +85,21 @@ def add_lora_to_prompt(prompt: str, lora_name: str, weight: float = 1.0) -> str:
 
 
 def input_image_to_pil(image) -> Image.Image:
-    if isinstance(image, str):
-        if os.path.exists(image):
-            return Image.open(BytesIO(read_image(image)))
+    def _convert_to_pil(image):
+        if isinstance(image, str):
+            if os.path.exists(image):
+                return Image.open(BytesIO(read_image(image)))
 
-        if image.startswith("http") or image.startswith("https"):
-            return Image.open(BytesIO(batch_download_images([image])[0]))
+            if image.startswith("http") or image.startswith("https"):
+                return Image.open(BytesIO(batch_download_images([image])[0]))
 
-    if isinstance(image, os.PathLike):
-        return Image.open(BytesIO(read_image(str(image))))
+        if isinstance(image, os.PathLike):
+            return Image.open(BytesIO(read_image(str(image))))
 
-    if isinstance(image, Image.Image):
-        return image
-    raise ValueError("Unknown image type: {}".format(type(image)))
+        if isinstance(image, Image.Image):
+            return image
+        raise ValueError("Unknown image type: {}".format(type(image)))
+    return ImageOps.exif_transpose(_convert_to_pil(image))
 
 
 def input_image_to_base64(image) -> str:

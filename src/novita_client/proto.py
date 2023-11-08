@@ -800,7 +800,7 @@ FACE_TRAINING_DEFAULT_COMPONENTS = [
         name="face_crop_region",
         args=[{
             "name": "ratio",
-            "value": "1"
+            "value": "1.4"
         }]
     ),
     TrainingComponent(
@@ -816,19 +816,19 @@ FACE_TRAINING_DEFAULT_COMPONENTS = [
             }
         ]
     ),
-    TrainingComponent(
-        name="face_restore",
-        args=[
-            {
-                "name": "method",
-                "value": "gfpgan_1.4"
-            },
-            {
-                "name": "upscale",
-                "value": "1.0"
-            }
-        ]
-    ),
+    # TrainingComponent(
+    #     name="face_restore",
+    #     args=[
+    #         {
+    #             "name": "method",
+    #             "value": "gfpgan_1.4"
+    #         },
+    #         {
+    #             "name": "upscale",
+    #             "value": "1.0"
+    #         }
+    #     ]
+    # ),
 ]
 
 

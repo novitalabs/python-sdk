@@ -14,6 +14,7 @@ import requests
 from . import settings
 from .utils import input_image_to_base64, input_image_to_pil
 from io import BytesIO
+from multiprocessing.pool import ThreadPool
 
 
 logger = logging.getLogger(__name__)
@@ -487,9 +488,8 @@ class NovitaClient:
             req.image_num = image_num
         return LCMTxt2ImgResponse.from_dict(self._post('/v3/lcm-txt2img', req.to_dict()))
 
-    def upload_assets(self, images: List[InputImage]) -> List[str]:
-        ret = []
-        for image in images:
+    def upload_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
+        def _upload_assets(image: InputImage) -> str:
             pil_image = input_image_to_pil(image)
             buff = BytesIO()
             if pil_image.format != "JPEG":
@@ -502,8 +502,33 @@ class NovitaClient:
             res = requests.put(upload_res.upload_url, data=buff.getvalue(), headers={'Content-type': 'image/jpeg'})
             if res.status_code != 200:
                 raise NovitaResponseError(f"Failed to upload image: {res.content}")
-            ret.append(upload_res.assets_id)
-        return ret
+            return upload_res
+
+        with ThreadPool(batch_size) as pool:
+            results = pool.map(_upload_assets, images)
+            ret = []
+            try:
+                for return_value in results:
+                    ret.append(return_value.assets_id)
+            except Exception as e:
+                raise NovitaResponseError(f"Failed to upload image: {e}")
+            return ret
+
+        # for image in images:
+        #     pil_image = input_image_to_pil(image)
+        #     buff = BytesIO()
+        #     if pil_image.format != "JPEG":
+        #         pil_image = pil_image.convert("RGB")
+        #         pil_image.save(buff, format="JPEG")
+        #     else:
+        #         pil_image.save(buff, format="JPEG")
+
+        #     upload_res: UploadAssetResponse = UploadAssetResponse.from_dict(self._post("/v3/assets/training_dataset", UploadAssetRequest(file_extension="jpeg").to_dict()))
+        #     res = requests.put(upload_res.upload_url, data=buff.getvalue(), headers={'Content-type': 'image/jpeg'})
+        #     if res.status_code != 200:
+        #         raise NovitaResponseError(f"Failed to upload image: {res.content}")
+        #     ret.append(upload_res.assets_id)
+        # return ret
 
     def create_training_subject(self, name,
                                 base_model,
