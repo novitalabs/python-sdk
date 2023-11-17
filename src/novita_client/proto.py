@@ -289,7 +289,7 @@ class ProgressData(JSONe):
     eta_relative: int
     imgs: Optional[List[str]] = None
     imgs_bytes: Optional[List[str]] = None
-    # info: Optional[Dict[str, str]] = None   # We'll handle this field separately
+    info: Optional[str] = ""
     failed_reason: Optional[str] = ""
     current_images: Optional[List[str]] = None
     submit_time: Optional[str] = ""
@@ -816,19 +816,19 @@ FACE_TRAINING_DEFAULT_COMPONENTS = [
             }
         ]
     ),
-    # TrainingComponent(
-    #     name="face_restore",
-    #     args=[
-    #         {
-    #             "name": "method",
-    #             "value": "gfpgan_1.4"
-    #         },
-    #         {
-    #             "name": "upscale",
-    #             "value": "1.0"
-    #         }
-    #     ]
-    # ),
+    TrainingComponent(
+        name="face_restore",
+        args=[
+            {
+                "name": "method",
+                "value": "gfpgan_1.4"
+            },
+            {
+                "name": "upscale",
+                "value": "1.0"
+            }
+        ]
+    ),
 ]
 
 
@@ -1153,3 +1153,4 @@ class MoodelsResponseV3(JSONe):
 class UserInfoResponse(JSONe):
     allow_features: List[str] = None
     credit_balance: int = 0
+    free_trial: Dict[str, int] = field(default_factory=lambda: {})

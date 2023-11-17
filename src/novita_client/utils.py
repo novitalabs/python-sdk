@@ -99,6 +99,7 @@ def input_image_to_pil(image) -> Image.Image:
         if isinstance(image, Image.Image):
             return image
         raise ValueError("Unknown image type: {}".format(type(image)))
+
     return ImageOps.exif_transpose(_convert_to_pil(image))
 
 
