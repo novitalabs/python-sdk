@@ -775,9 +775,9 @@ class TrainingImageDatasetItem(JSONe):
 
 @dataclass
 class TrainingExpertSetting(JSONe):
-    instance_prompt: str
-    class_prompt: str
-    max_train_steps: int
+    instance_prompt: str = None
+    class_prompt: str = None
+    max_train_steps: int = None
     learning_rate: str = None
     seed: int = None
     lr_scheduler: str = None
@@ -860,6 +860,30 @@ class QueryTrainingSubjectStatusResponse(JSONe):
     task_status: str
     model_type: str
     models: List[QueryTrainingSubjectModel]
+
+# --------------- Training Style ---------------
+
+
+@dataclass
+class TrainingStyleImageDatasetItem(JSONe):
+    assets_id: str
+    caption: str
+
+
+@dataclass
+class CreateTrainingStyleRequest(JSONe):
+    name: str
+    base_model: str
+    image_dataset_items: List[TrainingStyleImageDatasetItem]
+    width: int = 512
+    height: int = 512
+    expert_setting: TrainingExpertSetting = None
+    components: List[TrainingComponent] = None
+
+
+@dataclass
+class CreateTrainingStyleResponse(JSONe):
+    task_id: str
 
 
 @dataclass

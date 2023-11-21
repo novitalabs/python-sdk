@@ -322,7 +322,7 @@ class NovitaClient:
         image_b64 = input_image_to_base64(image)
         mask_b64 = input_image_to_base64(mask)
         request = CleanupRequest(image_file=image_b64, mask_file=mask_b64)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -341,7 +341,7 @@ class NovitaClient:
         if center_y is not None:
             request.center_y = center_y
 
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -352,7 +352,7 @@ class NovitaClient:
     def remove_background(self, image: InputImage, response_image_type=None) -> RemoveBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = RemoveBackgroundRequest(image_file=image_b64)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -362,7 +362,7 @@ class NovitaClient:
     def remove_text(self, image: InputImage, response_image_type=None) -> RemoveTextResponse:
         image_b64 = input_image_to_base64(image)
         request = RemoveTextRequest(image_file=image_b64)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -372,7 +372,7 @@ class NovitaClient:
     def reimagine(self, image: InputImage, response_image_type=None) -> ReimagineResponse:
         image_b64 = input_image_to_base64(image)
         request = ReimagineRequest(image_file=image_b64)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -385,7 +385,7 @@ class NovitaClient:
         if similarity is not None:
             request.similarity = similarity
 
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -396,7 +396,7 @@ class NovitaClient:
         image_b64 = input_image_to_base64(image)
         pose_image_b64 = input_image_to_base64(pose_image)
         request = MixPoseRequest(image_file=image_b64, pose_image_file=pose_image_b64)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -406,7 +406,7 @@ class NovitaClient:
     def replace_background(self, image: InputImage, prompt: str, response_image_type=None) -> ReplaceBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceBackgroundRequest(image_file=image_b64, prompt=prompt)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -415,7 +415,7 @@ class NovitaClient:
     def replace_sky(self, image: InputImage, sky: str, response_image_type=None) -> ReplaceSkyResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceSkyRequest(image_file=image_b64, sky=sky)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -433,7 +433,7 @@ class NovitaClient:
     def async_replace_object(self, image: InputImage, object_prompt: str, prompt: str, negative_prompt=None, response_image_type=None) -> ReplaceObjectResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceObjectRequest(image_file=image_b64, object_prompt=object_prompt, prompt=prompt, negative_prompt=negative_prompt)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -444,7 +444,7 @@ class NovitaClient:
         request = RestoreFaceRequest(image_file=image_b64)
         if fidelity is not None:
             request.fidelity = fidelity
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -458,7 +458,7 @@ class NovitaClient:
             request.width = width
         if height is not None:
             request.height = height
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -468,7 +468,7 @@ class NovitaClient:
         input_image = input_image_to_base64(image)
         face_image = input_image_to_base64(face_image)
         request = MergeFaceRequest(image_file=input_image, face_image_file=face_image)
-        if response_image_type is not None:
+        if response_image_type is None:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
@@ -530,6 +530,52 @@ class NovitaClient:
         #     ret.append(upload_res.assets_id)
         # return ret
 
+    def create_training_style(self,
+                              name,
+                              base_model,
+                              images: List[InputImage],
+                              captions: List[str],
+                              width: int = 512,
+                              height: int = 512,
+                              learning_rate: str = None,
+                              seed: int = None,
+                              lr_scheduler: str = None,
+                              with_prior_preservation: bool = None,
+                              prior_loss_weight: float = None,
+                              lora_r: int = None,
+                              lora_alpha: int = None,
+                              max_train_steps: str = None,
+                              lora_text_encoder_r: int = None,
+                              lora_text_encoder_alpha: int = None,
+                              components=None
+                              ):
+        if len(images) != len(captions):
+            raise ValueError("images and captions must have the same length")
+
+        assets = self.upload_assets(images)
+        req = CreateTrainingStyleRequest(
+            name=name,
+            base_model=base_model,
+            image_dataset_items=[TrainingStyleImageDatasetItem(assets_id=assets_id, caption=caption) for assets_id, caption in zip(assets, captions)],
+            expert_setting=TrainingExpertSetting(
+                max_train_steps=max_train_steps,
+                learning_rate=learning_rate,
+                seed=seed,
+                lr_scheduler=lr_scheduler,
+                with_prior_preservation=with_prior_preservation,
+                prior_loss_weight=prior_loss_weight,
+                lora_r=lora_r,
+                lora_alpha=lora_alpha,
+                lora_text_encoder_r=lora_text_encoder_r,
+                lora_text_encoder_alpha=lora_text_encoder_alpha,
+            ),
+            components=[_.to_dict() for _ in components] if components is not None else None,
+            width=width,
+            height=height,
+        )
+        res = CreateTrainingStyleResponse.from_dict(self._post("/v3/training/style", req.to_dict()))
+        return res.task_id
+
     def create_training_subject(self, name,
                                 base_model,
                                 images: List[InputImage],
@@ -567,7 +613,7 @@ class NovitaClient:
                 lora_text_encoder_r=lora_text_encoder_r,
                 lora_text_encoder_alpha=lora_text_encoder_alpha,
             ),
-            components=[_.to_dict() for _ in components],
+            components=[_.to_dict() for _ in components] if components is not None else None,
             width=width,
             height=height,
         )
