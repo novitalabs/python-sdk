@@ -128,6 +128,18 @@ class Refiner:
     checkpoint: str
     switch_at: float
 
+# --------------- ADEtailer ---------------
+
+
+@dataclass
+class ADEtailer:
+    prompt: str
+    negative_prompt: Optional[str] = None
+    steps: Optional[int] = 20
+    strength: Optional[float] = 0.5
+    seed: Optional[int] = None
+
+
 # --------------- Text2Image ---------------
 
 
@@ -159,6 +171,8 @@ class Txt2ImgRequest(JSONe):
     hr_resize_y: Optional[int] = None
 
     sd_refiner: Optional[Refiner] = None
+
+    adetailer: Optional[ADEtailer] = None
 
 
 class Txt2ImgResponseCode(Enum):
