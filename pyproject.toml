@@ -1,6 +1,6 @@
 [project]
 name = "novita_client"
-version = "0.4.7"
+version = "0.4.8"
 description = "novita SDK for Python"
 authors = [
     { name = "novita", email = "novitalabs@gmail.com" }

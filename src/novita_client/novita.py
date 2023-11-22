@@ -623,8 +623,12 @@ class NovitaClient:
     def query_training_subject_status(self, task_id: str) -> QueryTrainingSubjectStatusResponse:
         return QueryTrainingSubjectStatusResponse.from_dict(self._get("/v3/training/subject", params={"task_id": task_id}))
 
-    def list_training(self) -> TrainingTaskList:
-        return TrainingTaskList(TrainingTaskListResponse.from_dict(self._get("/v3/training")).tasks)
+    def list_training(self, task_type: str = None) -> TrainingTaskList:
+        params = {}
+        if task_type is not None:
+            params["task_type"] = task_type
+
+        return TrainingTaskList(TrainingTaskListResponse.from_dict(self._get("/v3/training", params=params)).tasks)
 
     def user_info(self) -> UserInfoResponse:
         return UserInfoResponse.from_dict(self._get("/v3/user"))
