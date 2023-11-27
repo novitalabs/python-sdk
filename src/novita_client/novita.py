@@ -439,6 +439,18 @@ class NovitaClient:
             request.set_image_type(response_image_type)
         return V3AsyncSubmitResponse.from_dict(self._post('/v3/async/replace-object', request.to_dict()))
 
+    def async_img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02) -> Img2VideoResponse:
+        image_b64 = input_image_to_base64(image)
+        request = Img2VideoRequest(model_name=model_name, image_file=image_b64, steps=steps, frames_num=frames_num, frames_per_second=frames_per_second, seed=seed,
+                                   image_file_resize_mode=image_file_resize_mode, motion_bucket_id=motion_bucket_id, cond_aug=cond_aug)
+        return Img2VideoResponse.from_dict(self._post('/v3/async/img2video', request.to_dict()))
+
+    def img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02) -> Img2VideoResponse:
+        res: Img2VideoResponse = self.async_img2video(image, model_name, steps, frames_num, frames_per_second, seed, image_file_resize_mode, motion_bucket_id, cond_aug)
+        final_res = self.wait_for_task_v3(res.task_id)
+        final_res.download_videos()
+        return final_res
+
     def restore_face(self, image: InputImage, fidelity=None, response_image_type=None) -> RestoreFaceResponse:
         image_b64 = input_image_to_base64(image)
         request = RestoreFaceRequest(image_file=image_b64)

@@ -608,6 +608,13 @@ class V3TaskImage(JSONe):
     image_url_ttl: int
 
 
+@dataclass
+class V3TaskVideo(JSONe):
+    video_url: str
+    video_type: str
+    video_url_ttl: int
+
+
 class V3TaskResponseStatus(Enum):
     TASK_STATUS_SUCCEED = "TASK_STATUS_SUCCEED"
     TASK_STATUS_QUEUED = "TASK_STATUS_QUEUED"
@@ -629,6 +636,7 @@ class V3TaskResponseTask(JSONe):
 class V3TaskResponse(JSONe):
     task: V3TaskResponseTask
     images: List[V3TaskImage] = None
+    videos: List[V3TaskVideo] = None
 
     def finished(self):
         return self.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED or self.task.status == V3TaskResponseStatus.TASK_STATUS_FAILED
@@ -636,9 +644,16 @@ class V3TaskResponse(JSONe):
     def get_image_urls(self):
         return [image.image_url for image in self.images]
 
+    def get_video_urls(self):
+        return [video.video_url for video in self.videos]
+
     def download_images(self):
         if self.images is not None and len(self.images) > 0:
             self.images_encoded = [base64.b64encode(_).decode('ascii') for _ in batch_download_images(self.get_image_urls())]
+
+    def download_videos(self):
+        if self.videos is not None and len(self.videos) > 0:
+            self.video_bytes = batch_download_images(self.get_video_urls())
 
 # --------------- Restore Faces ---------------
 
@@ -948,6 +963,31 @@ class TrainingTaskList(list):
 
     def sort_by_created_at(self):
         return TrainingTaskList(sorted(self, key=lambda x: x.created_at, reverse=True))
+
+
+# --------------- Image to Video ---------------
+
+class Img2VideoResizeMode(Enum):
+    ORIGINAL_DIMENSION = "ORIGINAL_DIMENSION"
+    CROP_TO_ASPECT_RATIO = "CROP_TO_ASPECT_RATIO"
+
+
+@dataclass
+class Img2VideoRequest(JSONe):
+    model_name: str
+    image_file: str
+    steps: int
+    frames_num: int = 14
+    frames_per_second: int = 6
+    seed: Optional[int] = None
+    image_file_resize_mode: Optional[str] = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO
+    motion_bucket_id: Optional[int] = 127
+    cond_aug: Optional[float] = 0.02
+
+
+@dataclass
+class Img2VideoResponse(JSONe):
+    task_id: str
 
 
 # --------------- Model ---------------
