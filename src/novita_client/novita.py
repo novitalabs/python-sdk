@@ -451,6 +451,22 @@ class NovitaClient:
         final_res.download_videos()
         return final_res
 
+    def lcm_img2img(self, model_name: str, image: InputImage, prompt: str, negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, sd_vae: str = None, loras: List[LCMLoRA] = None, embeddings: List[LCMEmbedding] = None) -> LCMImg2ImgResponse:
+        res = self._post('/v3/lcm-img2img', LCMImg2ImgRequest(
+            input_image=input_image_to_base64(image),
+            prompt=prompt,
+            model_name=model_name,
+            negative_prompt=negative_prompt,
+            steps=steps,
+            guidance_scale=guidance_scale,
+            image_num=image_num,
+            clip_skip=clip_skip,
+            sd_vae=sd_vae,
+            loras=loras,
+            embeddings=embeddings,
+        ).to_dict())
+        return LCMImg2ImgResponse.from_dict(res)
+
     def restore_face(self, image: InputImage, fidelity=None, response_image_type=None) -> RestoreFaceResponse:
         image_b64 = input_image_to_base64(image)
         request = RestoreFaceRequest(image_file=image_b64)
@@ -500,7 +516,7 @@ class NovitaClient:
             req.image_num = image_num
         return LCMTxt2ImgResponse.from_dict(self._post('/v3/lcm-txt2img', req.to_dict()))
 
-    def upload_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
+    def upload_training_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
         def _upload_assets(image: InputImage) -> str:
             pil_image = input_image_to_pil(image)
             buff = BytesIO()
@@ -564,7 +580,7 @@ class NovitaClient:
         if len(images) != len(captions):
             raise ValueError("images and captions must have the same length")
 
-        assets = self.upload_assets(images)
+        assets = self.upload_training_assets(images)
         req = CreateTrainingStyleRequest(
             name=name,
             base_model=base_model,
@@ -606,7 +622,7 @@ class NovitaClient:
                                 lora_text_encoder_r: int = None,
                                 lora_text_encoder_alpha: int = None,
                                 components=None) -> str:
-        assets = self.upload_assets(images)
+        assets = self.upload_training_assets(images)
         req = CreateTrainingSubjectRequest(
             name=name,
             base_model=base_model,
@@ -641,6 +657,81 @@ class NovitaClient:
             params["task_type"] = task_type
 
         return TrainingTaskList(TrainingTaskListResponse.from_dict(self._get("/v3/training", params=params)).tasks)
+
+    def upload_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
+        buffs = []
+        for image in images:
+            pil_image = input_image_to_pil(image)
+            buff = BytesIO()
+            if pil_image.format != "JPEG":
+                pil_image = pil_image.convert("RGB")
+                pil_image.save(buff, format="JPEG")
+            else:
+                pil_image.save(buff, format="JPEG")
+            buffs.append(buff)
+
+        def _upload_asset(buff):
+            attempt = 5
+            while attempt > 0:
+                upload_res = requests.put("https://assets.novitai.com/image", data=buff.getvalue(), headers={'Content-type': 'image/jpeg'})
+                if upload_res.status_code < 400:
+                    return upload_res.json()["assets_id"]
+                attempt -= 1
+            raise NovitaResponseError(f"Failed to upload image: {upload_res.content}")
+
+        with ThreadPool(batch_size) as pool:
+            results = pool.map(_upload_asset, buffs)
+            ret = []
+            try:
+                for return_value in results:
+                    ret.append(return_value)
+            except Exception as e:
+                raise NovitaResponseError(f"Failed to upload image: {e}")
+            return ret
+
+    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None) -> MakePhotoResponse:
+        assets = self.upload_assets(images)
+        req = MakePhotoRequest(
+            model_name=model_name,
+            image_assets_ids=assets,
+            prompt=prompt,
+        )
+        if loras is not None:
+            req.loras = loras
+        if height is not None:
+            req.height = height
+        if width is not None:
+            req.width = width
+        if negative_prompt is not None:
+            req.negative_prompt = negative_prompt
+        if steps is not None:
+            req.steps = steps
+        if guidance_scale is not None:
+            req.guidance_scale = guidance_scale
+        if image_num is not None:
+            req.image_num = image_num
+        if clip_skip is not None:
+            req.clip_skip = clip_skip
+        if seed is not None:
+            req.seed = seed
+        if strength is not None:
+            req.strength = strength
+        if sampler_name is not None:
+            req.sampler_name = sampler_name
+
+        if response_image_type is None:
+            req.set_image_type(self._default_response_image_type)
+        else:
+            req.set_image_type(response_image_type)
+
+        return MakePhotoResponse.from_dict(self._post('/v3/async/make-photo', req.to_dict()))
+
+    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None) -> V3TaskResponse:
+        res: MakePhotoResponse = self.async_make_photo(images, model_name, prompt, loras, height, width, negative_prompt, steps,
+                                                       guidance_scale, image_num, clip_skip, seed, strength, sampler_name, response_image_type)
+        final_res = self.wait_for_task_v3(res.task_id)
+        final_res.download_images()
+        return final_res
 
     def user_info(self) -> UserInfoResponse:
         return UserInfoResponse.from_dict(self._get("/v3/user"))

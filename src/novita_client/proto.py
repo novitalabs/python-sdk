@@ -989,6 +989,81 @@ class Img2VideoRequest(JSONe):
 class Img2VideoResponse(JSONe):
     task_id: str
 
+# --------------- LCM Image to Image ---------------
+
+
+@dataclass
+class LCMLoRA(JSONe):
+    model_name: str
+    strenth: Optional[float] = 1.0
+
+
+@dataclass
+class LCMEmbedding(JSONe):
+    model_name: str
+
+
+@dataclass
+class LCMImg2ImgRequest(JSONe):
+    model_name: str
+    input_image: str
+    prompt: str
+    negative_prompt: Optional[str] = None
+    sd_vae: Optional[str] = None
+    loras: Optional[List[LCMLoRA]] = None
+    embeddings: Optional[List[LCMEmbedding]] = None
+    seed: Optional[int] = None
+    image_num: Optional[int] = 1
+    steps: Optional[int] = 8
+    clip_skip: Optional[int] = None
+    guidance_scale: Optional[float] = 0
+
+
+@dataclass
+class LCMImg2ImgResponseImage(JSONe):
+    image_url: str
+    image_type: str
+    image_url_ttl: int
+
+
+@dataclass
+class LCMImg2ImgResponse(JSONe):
+    images: List[LCMImg2ImgResponseImage]
+
+
+# --------------- Make Photo ---------------
+
+@dataclass
+class MakePhotoLoRA(JSONe):
+    model_name: str
+    strength: Optional[float] = 1.0
+
+
+@dataclass
+class MakePhotoRequest(JSONe):
+    image_assets_ids: List[str]
+    model_name: str
+    prompt: str
+    negative_prompt: Optional[str] = None
+    loras: List[MakePhotoLoRA] = None
+    height: Optional[int] = 1024
+    width: Optional[int] = 1024
+    image_num: Optional[int] = 1
+    steps: Optional[int] = 50
+    seed: Optional[int] = None
+    guidance_scale: Optional[float] = 7.5
+    sampler_name: Optional[str] = Samplers.EULER_A
+    strength: Optional[float] = 0.25
+    crop_face: Optional[bool] = False
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class MakePhotoResponse(JSONe):
+    task_id: str
 
 # --------------- Model ---------------
 

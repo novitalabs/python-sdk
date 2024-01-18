@@ -6,7 +6,6 @@
 #   features: []
 #   all-features: false
 
---trusted-host pypi.ngc.nvidia.com
 -e file:.
 certifi==2023.7.22
 charset-normalizer==3.2.0
