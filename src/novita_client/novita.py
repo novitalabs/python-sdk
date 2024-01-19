@@ -689,7 +689,7 @@ class NovitaClient:
                 raise NovitaResponseError(f"Failed to upload image: {e}")
             return ret
 
-    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None) -> MakePhotoResponse:
+    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, crop_face: bool = None) -> MakePhotoResponse:
         assets = self.upload_assets(images)
         req = MakePhotoRequest(
             model_name=model_name,
@@ -718,6 +718,8 @@ class NovitaClient:
             req.strength = strength
         if sampler_name is not None:
             req.sampler_name = sampler_name
+        if crop_face is not None:
+            req.crop_face = crop_face
 
         if response_image_type is None:
             req.set_image_type(self._default_response_image_type)

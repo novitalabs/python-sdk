@@ -1054,7 +1054,7 @@ class MakePhotoRequest(JSONe):
     guidance_scale: Optional[float] = 7.5
     sampler_name: Optional[str] = Samplers.EULER_A
     strength: Optional[float] = 0.25
-    crop_face: Optional[bool] = False
+    crop_face: Optional[bool] = True
     extra: Dict = field(default_factory=lambda: dict())
 
     def set_image_type(self, image_type: str):
