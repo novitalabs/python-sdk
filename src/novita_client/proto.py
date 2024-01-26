@@ -144,6 +144,11 @@ class ADEtailer:
 
 
 @dataclass
+class Txt2ImgRequestExtra(JSONe):
+    enable_nsfw_detection: bool
+
+
+@dataclass
 class Txt2ImgRequest(JSONe):
     prompt: str
     negative_prompt: Optional[str] = None
@@ -173,6 +178,8 @@ class Txt2ImgRequest(JSONe):
     sd_refiner: Optional[Refiner] = None
 
     adetailer: Optional[ADEtailer] = None
+
+    extra: Optional[Txt2ImgRequestExtra] = None
 
 
 class Txt2ImgResponseCode(Enum):
@@ -276,6 +283,15 @@ class Img2ImgResponse(JSONe):
     msg: str
     data: Optional[Img2ImgResponseData] = None
 
+
+# --------------- NSFWDetectionResult ---------------
+
+@dataclass
+class NSFWDetectionResult(JSONe):
+    valid: bool
+    confidence: float
+
+
 # --------------- Progress ---------------
 
 
@@ -296,11 +312,20 @@ class ProgressResponseStatusCode(Enum):
         return self in (ProgressResponseStatusCode.SUCCESSFUL, ProgressResponseStatusCode.FAILED, ProgressResponseStatusCode.TIMEOUT)
 
 
+# --------------- NSFWDetectionResult ---------------
+
+@dataclass
+class NSFWDetectionResult(JSONe):
+    valid: bool
+    confidence: float
+
+
 @dataclass
 class ProgressData(JSONe):
     status: ProgressResponseStatusCode
     progress: int
     eta_relative: int
+    enable_nsfw_detection: bool
     imgs: Optional[List[str]] = None
     imgs_bytes: Optional[List[str]] = None
     info: Optional[str] = ""
@@ -310,6 +335,9 @@ class ProgressData(JSONe):
     execution_time: Optional[str] = ""
     txt2img_time: Optional[str] = ""
     finish_time: Optional[str] = ""
+    nsfw_detection_result: Optional[List[NSFWDetectionResult]] = None
+
+
 
 
 class ProgressResponseCode(Enum):
@@ -606,6 +634,7 @@ class V3TaskImage(JSONe):
     image_url: str
     image_type: str
     image_url_ttl: int
+    nsfw_detection_result: Optional[NSFWDetectionResult] = None
 
 
 @dataclass
@@ -613,6 +642,7 @@ class V3TaskVideo(JSONe):
     video_url: str
     video_type: str
     video_url_ttl: int
+    nsfw_detection_result: Optional[NSFWDetectionResult] = None
 
 
 class V3TaskResponseStatus(Enum):
@@ -633,7 +663,14 @@ class V3TaskResponseTask(JSONe):
 
 
 @dataclass
+class V3TaskResponseExtra(JSONe):
+    seed: str
+    enable_nsfw_detection: bool
+
+
+@dataclass
 class V3TaskResponse(JSONe):
+    extra: V3TaskResponseExtra
     task: V3TaskResponseTask
     images: List[V3TaskImage] = None
     videos: List[V3TaskVideo] = None
