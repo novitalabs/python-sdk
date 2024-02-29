@@ -1065,6 +1065,41 @@ class MakePhotoRequest(JSONe):
 class MakePhotoResponse(JSONe):
     task_id: str
 
+
+@dataclass
+class InstantIDControlnetUnit(JSONe):
+    model_name: str
+    strength: Optional[float]
+    preprocessor: Optional[ControlNetPreprocessor]
+
+
+InstantIDLora = MakePhotoLoRA
+
+
+@dataclass
+class InstantIDRequest(JSONe):
+    face_image_assets_ids: List[str]
+    ref_image_assets_ids: List[str]
+    model_name: str = None
+    prompt: str = None
+    negative_prompt: str = None
+    width: int = None
+    height: int = None
+    id_strength: float = 1.
+    adapter_strength: float = 1.
+    steps: int = 20
+    seed: int = -1
+    image_num: int = 1
+    guidance_scale: float = 5.
+    sampler_name: str = 'Euler'
+    controlnets: List[InstantIDControlnetUnit] = None
+    loras: List[InstantIDLora] = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
 # --------------- Model ---------------
 
 

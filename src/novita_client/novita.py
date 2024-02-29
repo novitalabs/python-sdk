@@ -733,6 +733,66 @@ class NovitaClient:
         final_res.download_images()
         return final_res
 
+    def instant_id(self,
+                   face_images: List[InputImage],
+                   ref_images: List[InputImage] = None,
+                   model_name: str = None,
+                   prompt: str = None,
+                   negative_prompt: str = None,
+                   width: int = None,
+                   height: int = None,  # if size arguments (width or height) is None, default size is equal to reference image size
+                   id_strength: float = None,
+                   adapter_strength: float = None,
+                   steps: int = 20,
+                   seed: int = -1,
+                   guidance_scale: float = 5.,
+                   sampler_name: str = 'Euler',
+                   controlnets: List[InstantIDControlnetUnit] = None,
+                   loras: List[InstantIDLora] = None,
+                   response_image_type: str = None,
+                   callback: callable = None,
+                   ):
+        face_images = [input_image_to_pil(img) for img in face_images]
+        ref_images = ref_images and [input_image_to_pil(img) for img in ref_images]
+
+        face_image_assets_ids = self.upload_assets(face_images)
+        if ref_images is not None and len(ref_images) > 0:
+            ref_image_assets_ids = self.upload_assets(ref_images)
+        else:
+            ref_image_assets_ids = face_image_assets_ids[:1]
+
+        if width is None or height is None:
+            ref_img = ref_images[0] if ref_images and len(ref_images) > 0 else face_images[0]
+            width, height = ref_img.size
+
+        payload_data = InstantIDRequest(
+            face_image_assets_ids=face_image_assets_ids,
+            ref_image_assets_ids=ref_image_assets_ids,
+            model_name=model_name,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            id_strength=id_strength,
+            adapter_strength=adapter_strength,
+            steps=steps,
+            seed=seed,
+            guidance_scale=guidance_scale,
+            sampler_name=sampler_name,
+            controlnets=controlnets,
+            loras=loras,
+        ).to_dict()
+
+        if response_image_type is not None:
+            payload_data.set_image_type(response_image_type)
+
+        res = self._post("/v3/async/instant-id", payload_data)
+        final_res = self.wait_for_task_v3(res["task_id"], callback=callback)
+        if final_res is not None and final_res.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            final_res.download_images()
+
+        return final_res
+
     def user_info(self) -> UserInfoResponse:
         return UserInfoResponse.from_dict(self._get("/v3/user"))
 
