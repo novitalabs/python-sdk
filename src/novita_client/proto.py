@@ -1100,6 +1100,131 @@ class InstantIDRequest(JSONe):
         self.extra['response_image_type'] = image_type
 
 
+# --------------- Common V3 ---------------
+
+@dataclass
+class CommonV3Request(JSONe):
+    extra: Dict[str, Any] = field(default_factory=lambda: dict())
+    request: Any = field(default_factory=lambda: dict())
+
+
+@dataclass
+class CommonV3Extra(JSONe):
+    response_image_type: str = "jpeg"
+    enable_nsfw_detection: bool = False
+    nsfw_detection_level: int = 0
+    custom_storage: Dict[str, Any] = field(default_factory=lambda: dict())
+    enterprise_plan: Dict[str, Any] = field(default_factory=lambda: dict())
+
+# --------------- Img2ImgV3 ---------------
+
+
+@dataclass
+class Img2V3ImgLoRA(JSONe):
+    model_name: str
+    strength: Optional[float] = 1.0
+
+
+@dataclass
+class Img2ImgV3Embedding(JSONe):
+    model_name: str
+
+
+@dataclass
+class Img2ImgV3ControlNetUnit(JSONe):
+    model_name: str
+    image_base64: str
+    strength: Optional[float] = 1.0
+    preprocessor: Optional[ControlNetPreprocessor] = "canny"
+    guidance_start: Optional[float] = 0
+    guidance_end: Optional[float] = 1
+
+
+@dataclass
+class Img2ImgV3ControlNet(JSONe):
+    units: List[Img2ImgV3ControlNetUnit]
+
+
+@dataclass
+class Img2ImgV3Request(JSONe):
+    model_name: str
+    image_base64: str
+    prompt: str
+    width: Optional[int] = 512
+    height: Optional[int] = 512
+    negative_prompt: Optional[str] = None
+    sd_vae: Optional[str] = None
+    loras: Optional[List[Img2V3ImgLoRA]] = None
+    embeddings: Optional[List[Img2ImgV3Embedding]] = None
+    seed: Optional[int] = -1
+    image_num: Optional[int] = 1
+    steps: Optional[int] = 20
+    clip_skip: Optional[int] = None
+    guidance_scale: Optional[float] = 7.5
+    strength: Optional[float] = 0.5
+    sampler_name: Optional[str] = Samplers.EULER_A
+    extra: Dict = field(default_factory=lambda: dict())
+    controlnet: Optional[Img2ImgV3ControlNet] = None
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+
+@dataclass
+class Img2ImgV3Response(JSONe):
+    task_id: str
+
+# --------------- Txt2ImgV3 ---------------
+
+
+@dataclass
+class Txt2ImgV3Embedding(JSONe):
+    model_name: str
+
+
+@dataclass
+class Txt2ImgV3LoRA(JSONe):
+    model_name: str
+    strength: Optional[float] = 1.0
+
+
+@dataclass
+class Txt2ImgV3HiresFix(JSONe):
+    target_width: int
+    target_height: int
+    strength: float = 0.5
+    upscaler: str = "Latent"
+
+
+@dataclass
+class Txt2ImgV3Refiner(JSONe):
+    switch_at: float = 0.5
+
+
+@dataclass
+class Txt2ImgV3Request(JSONe):
+    model_name: str
+    prompt: str
+    height: Optional[int] = 512
+    width: Optional[int] = 512
+    image_num: Optional[int] = 1
+    sd_vae: Optional[str] = None
+    steps: Optional[int] = 20
+    guidance_scale: Optional[float] = 7.5
+    sampler_name: Optional[str] = Samplers.EULER_A
+    seed: Optional[int] = None
+    negative_prompt: Optional[str] = None
+    loras: Optional[List[Txt2ImgV3LoRA]] = None
+    embeddings: Optional[List[Txt2ImgV3Embedding]] = None
+    refiner: Optional[Txt2ImgV3Refiner] = None
+    hires_fix: Optional[Txt2ImgV3HiresFix] = None
+    clip_skip: Optional[int] = None
+
+
+@dataclass
+class Txt2ImgV3Response(JSONe):
+    task_id: str
+
 # --------------- Model ---------------
 
 

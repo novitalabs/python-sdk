@@ -9,7 +9,6 @@ res = client.img2video(
     steps=30,
     frames_num=25,
     image="https://replicate.delivery/pbxt/JvLi9smWKKDfQpylBYosqQRfPKZPntuAziesp0VuPjidq61n/rocket.png"
-
 )
 
 

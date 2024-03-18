@@ -16,6 +16,7 @@ def test_txt2img_sync():
         batch_size=1,
         cfg_scale=7.5,
         sampler_name=Samplers.EULER_A,
+        model_name="cyberrealistic_classicV14_73029.safetensors"
     ))
 
     assert (res.data.status == ProgressResponseStatusCode.SUCCESSFUL)
