@@ -15,10 +15,11 @@ this SDK is based on the official [API documentation](https://docs.novita.ai/)
 pip install novita
 ```
 
+## Examples
+
+- [fine tune example](https://colab.research.google.com/drive/1j_ii9TN67nuauvc3PiauwZnC2lT62tGF?usp=sharing)
 EOF
 
-
-echo "## Examples" >> README.md
 
 for FILE in $(ls examples/ | grep py | sort -V); do
     NAME=$(echo "$FILE" | sed 's/.py//')

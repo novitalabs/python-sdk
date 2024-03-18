@@ -13,6 +13,8 @@ pip install novita
 ```
 
 ## Examples
+
+- [fine tune example](https://colab.research.google.com/drive/1j_ii9TN67nuauvc3PiauwZnC2lT62tGF?usp=sharing)
 - [cleanup](./examples/cleanup.py)
 - [controlnet](./examples/controlnet.py)
 - [create-tile](./examples/create-tile.py)
