@@ -364,9 +364,8 @@ def test_normal_txt2img():
         for image in images:
             background.paste(image, (x, y))
             background.save("normal.jpeg")
-            # 更新位置计数器
-            x += 512  # 向右移动一个图像的宽度
-            if x >= 512 * 10:  # 如果一行已满，换到下一行
+            x += 512  
+            if x >= 512 * 10:  
                 x = 0
                 y += 512
 
