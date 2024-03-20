@@ -31,6 +31,7 @@ if __name__ == '__main__':
 				preprocessor='canny',
 			),
 		],
+		response_image_type='jpeg',
 	)
 
 	print('res:', res)
