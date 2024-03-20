@@ -19,6 +19,8 @@ if __name__ == '__main__':
 		adapter_strength=0.8,
 		steps=20,
 		seed=42,
+		width=1024,
+		height=1024,
 		controlnets=[
 			InstantIDControlnetUnit(
 				model_name='controlnet-openpose-sdxl-1.0',

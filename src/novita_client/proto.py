@@ -1077,6 +1077,11 @@ InstantIDLora = MakePhotoLoRA
 
 
 @dataclass
+class InstantIDRequestControlNet(JSONe):
+    units: List[InstantIDControlnetUnit]
+
+
+@dataclass
 class InstantIDRequest(JSONe):
     face_image_assets_ids: List[str]
     ref_image_assets_ids: List[str]
@@ -1092,7 +1097,7 @@ class InstantIDRequest(JSONe):
     image_num: int = 1
     guidance_scale: float = 5.
     sampler_name: str = 'Euler'
-    controlnets: List[InstantIDControlnetUnit] = None
+    controlnet: InstantIDRequestControlNet = None
     loras: List[InstantIDLora] = None
     extra: Dict = field(default_factory=lambda: dict())
 

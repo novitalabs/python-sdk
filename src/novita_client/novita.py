@@ -786,7 +786,7 @@ class NovitaClient:
             seed=seed,
             guidance_scale=guidance_scale,
             sampler_name=sampler_name,
-            controlnets=controlnets,
+            controlnet=InstantIDRequestControlNet(units=controlnets),
             loras=loras,
         )
 
