@@ -796,7 +796,7 @@ class NovitaClient:
         res = self._post("/v3/async/instant-id", payload_data.to_dict())
         final_res = self.wait_for_task_v3(res["task_id"], callback=callback)
         if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
         else:
             if download_images:
                 final_res.download_images()
