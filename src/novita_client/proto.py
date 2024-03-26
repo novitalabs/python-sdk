@@ -617,6 +617,7 @@ class V3TaskVideo(JSONe):
 
 class V3TaskResponseStatus(Enum):
     TASK_STATUS_SUCCEED = "TASK_STATUS_SUCCEED"
+    TASK_STATUS_PROCESSING = "TASK_STATUS_PROCESSING"
     TASK_STATUS_QUEUED = "TASK_STATUS_QUEUED"
     TASK_STATUS_FAILED = "TASK_STATUS_FAILED"
 
@@ -982,6 +983,7 @@ class Img2VideoRequest(JSONe):
     seed: Optional[int] = None
     image_file_resize_mode: Optional[str] = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO
     motion_bucket_id: Optional[int] = 127
+    enable_frame_interpolation: Optional[bool] = False
     cond_aug: Optional[float] = 0.02
 
 

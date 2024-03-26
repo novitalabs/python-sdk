@@ -70,16 +70,19 @@ client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', N
 res = client.img2img_v3(
     input_image="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
     model_name="dreamshaper_8_93211.safetensors",
-    prompt="a cute dog",
+    prompt="a cute dog, masterpiece, best quality",
     sampler_name=Samplers.DPMPP_M_KARRAS,
     width=512,
     height=512,
     steps=30,
+    strength=1.0,
     controlnet_units=[
         Img2ImgV3ControlNetUnit(
-            image_base64="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
-            model_name="control_v11f1p_sd15_depth",
-            strength=1.0
+            # image_base64="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
+            image_base64="examples/fixtures/qrcode.png",
+            model_name="control_v1p_sd15_brightness",
+            preprocessor=None,
+            strength=1
         )
     ],
     embeddings=[Img2ImgV3Embedding(model_name=_) for _ in [
@@ -128,8 +131,10 @@ import os
 
 from novita_client import NovitaClient, Img2ImgV3ControlNetUnit, ControlNetPreprocessor, Img2ImgV3Embedding
 from novita_client.utils import base64_to_image, input_image_to_pil
+from concurrent.futures import ThreadPoolExecutor
 
 client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+
 res = client.img2img_v3(
     model_name="MeinaHentai_V5.safetensors",
     steps=30,
@@ -147,6 +152,7 @@ res = client.img2img_v3(
         "easynegative_8955.safetensors"]],
     seed=-1,
     sampler_name="DPM++ 2M Karras",
+    sd_vae="klF8Anime2VAE_klF8Anime2VAE_207314.safetensors",
     clip_skip=2,
     # controlnet_units=[Img2ImgV3ControlNetUnit(
     #     model_name="control_v11f1p_sd15_depth",
@@ -165,12 +171,13 @@ import os
 from novita_client import NovitaClient
 from novita_client.utils import base64_to_image
 
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URNOVITA_API_URII', None))
 res = client.img2video(
     model_name="SVD-XT",
     steps=30,
     frames_num=25,
-    image="https://replicate.delivery/pbxt/JvLi9smWKKDfQpylBYosqQRfPKZPntuAziesp0VuPjidq61n/rocket.png"
+    image="https://replicate.delivery/pbxt/JvLi9smWKKDfQpylBYosqQRfPKZPntuAziesp0VuPjidq61n/rocket.png",
+    enable_frame_interpolation=True
 )
 
 
@@ -200,6 +207,8 @@ if __name__ == '__main__':
 		adapter_strength=0.8,
 		steps=20,
 		seed=42,
+		width=1024,
+		height=1024,
 		controlnets=[
 			InstantIDControlnetUnit(
 				model_name='controlnet-openpose-sdxl-1.0',
@@ -212,6 +221,7 @@ if __name__ == '__main__':
 				preprocessor='canny',
 			),
 		],
+		response_image_type='jpeg',
 	)
 
 	print('res:', res)
@@ -364,8 +374,9 @@ def test_normal_txt2img():
         for image in images:
             background.paste(image, (x, y))
             background.save("normal.jpeg")
-            x += 512  
-            if x >= 512 * 10:  
+            # 更新位置计数器
+            x += 512  # 向右移动一个图像的宽度
+            if x >= 512 * 10:  # 如果一行已满，换到下一行
                 x = 0
                 y += 512
 

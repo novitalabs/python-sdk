@@ -206,6 +206,8 @@ class NovitaClient:
 
             sleep(settings.DEFAULT_POLL_INTERVAL)
             i += 1
+        raise NovitaTimeoutError(
+            f"Task {task_id} failed to complete in {wait_for} seconds")
 
     def sync_txt2img(self, request: Txt2ImgRequest, download_images=True, callback: callable = None) -> ProgressResponse:
         """Synchronously generate images from request, optionally download images
@@ -439,14 +441,14 @@ class NovitaClient:
             request.set_image_type(response_image_type)
         return V3AsyncSubmitResponse.from_dict(self._post('/v3/async/replace-object', request.to_dict()))
 
-    def async_img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02) -> Img2VideoResponse:
+    def async_img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02, enable_frame_interpolation: bool = False) -> Img2VideoResponse:
         image_b64 = input_image_to_base64(image)
         request = Img2VideoRequest(model_name=model_name, image_file=image_b64, steps=steps, frames_num=frames_num, frames_per_second=frames_per_second, seed=seed,
-                                   image_file_resize_mode=image_file_resize_mode, motion_bucket_id=motion_bucket_id, cond_aug=cond_aug)
+                                   image_file_resize_mode=image_file_resize_mode, motion_bucket_id=motion_bucket_id, cond_aug=cond_aug, enable_frame_interpolation=enable_frame_interpolation)
         return Img2VideoResponse.from_dict(self._post('/v3/async/img2video', request.to_dict()))
 
-    def img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02) -> Img2VideoResponse:
-        res: Img2VideoResponse = self.async_img2video(image, model_name, steps, frames_num, frames_per_second, seed, image_file_resize_mode, motion_bucket_id, cond_aug)
+    def img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02, enable_frame_interpolation: bool = False) -> Img2VideoResponse:
+        res: Img2VideoResponse = self.async_img2video(image, model_name, steps, frames_num, frames_per_second, seed, image_file_resize_mode, motion_bucket_id, cond_aug, enable_frame_interpolation)
         final_res = self.wait_for_task_v3(res.task_id)
         final_res.download_videos()
         return final_res
@@ -848,7 +850,7 @@ class NovitaClient:
         res = self.raw_img2img_v3(req, extra)
         final_res = self.wait_for_task_v3(res.task_id, callback=callback)
         if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+            logger.error(f"Task {res.task_id} failed with status {final_res.task.status}")
         else:
             if download_images:
                 final_res.download_images()
