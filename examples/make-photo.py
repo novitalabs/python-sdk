@@ -2,23 +2,30 @@
 # -*- coding: UTF-8 -*-
 
 import os
-from novita_client import NovitaClient
+from novita_client import NovitaClient, MakePhotoLoRA
 import base64
 
 
 client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
 res = client.make_photo(
-    model_name="protovisionXLHighFidelity3D_release0620Bakedvae_131308.safetensors",
-    prompt="instagram photo, portrait photo of a woman img, colorful, perfect face, natural skin, hard shadows, film grain",
+    model_name="sd_xl_base_1.0.safetensors",
+    prompt="anime artwork man img, portrait. anime style, key visual, vibrant, studio anime, highly detailed",
+    negative_prompt="wrong, photo, deformed, black and white, realism, disfigured, low contrast",
     images=[
-        "https://tencentarc-photomaker.hf.space/--replicas/i0n9t/file=/tmp/gradio/89a694e30ca80f6b76dc4a57a3bce83ad36c5c86/scarlett_0.jpg"
+        "../testdataset/portrait2image/7.jpg"
     ],
-    steps=50,
+    loras=[
+        MakePhotoLoRA(
+            model_name="sdxl_wrong_lora",
+            strength=0.8
+        )
+    ],
+    steps=25,
     guidance_scale=5,
     image_num=1,
-    strength=0.2,
-    seed=-1,
+    strength=0.3,
+    seed=1024,
 )
 
 

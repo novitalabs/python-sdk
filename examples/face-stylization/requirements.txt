@@ -1,2 +1,0 @@
-novita_client
-gradio==3.50.2

@@ -5,11 +5,20 @@
 #   pre: false
 #   features: []
 #   all-features: false
+#   with-sources: false
 
 -e file:.
 certifi==2023.7.22
+    # via requests
 charset-normalizer==3.2.0
+    # via requests
 dataclass-wizard==0.22.2
+    # via novita-client
 idna==3.4
+    # via requests
+pillow==10.2.0
+    # via novita-client
 requests==2.31.0
+    # via novita-client
 urllib3==2.0.4
+    # via requests

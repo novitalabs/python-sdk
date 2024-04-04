@@ -689,7 +689,7 @@ class NovitaClient:
                 raise NovitaResponseError(f"Failed to upload image: {e}")
             return ret
 
-    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None) -> MakePhotoResponse:
+    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, crop_face: bool = None) -> MakePhotoResponse:
         assets = self.upload_assets(images)
         req = MakePhotoRequest(
             model_name=model_name,
@@ -718,6 +718,8 @@ class NovitaClient:
             req.strength = strength
         if sampler_name is not None:
             req.sampler_name = sampler_name
+        if crop_face is not None:
+            req.crop_face = crop_face
 
         if response_image_type is None:
             req.set_image_type(self._default_response_image_type)
@@ -726,11 +728,176 @@ class NovitaClient:
 
         return MakePhotoResponse.from_dict(self._post('/v3/async/make-photo', req.to_dict()))
 
-    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None) -> V3TaskResponse:
+    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, download_images: bool = True, callback: callable = None) -> V3TaskResponse:
         res: MakePhotoResponse = self.async_make_photo(images, model_name, prompt, loras, height, width, negative_prompt, steps,
                                                        guidance_scale, image_num, clip_skip, seed, strength, sampler_name, response_image_type)
-        final_res = self.wait_for_task_v3(res.task_id)
-        final_res.download_images()
+        final_res = self.wait_for_task_v3(res.task_id, callback=callback)
+        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+        else:
+            if download_images:
+                final_res.download_images()
+        return final_res
+
+    def instant_id(self,
+                   face_images: List[InputImage],
+                   ref_images: List[InputImage] = None,
+                   model_name: str = None,
+                   prompt: str = None,
+                   negative_prompt: str = None,
+                   width: int = None,
+                   height: int = None,  # if size arguments (width or height) is None, default size is equal to reference image size
+                   id_strength: float = None,
+                   adapter_strength: float = None,
+                   steps: int = 20,
+                   seed: int = -1,
+                   guidance_scale: float = 5.,
+                   sampler_name: str = 'Euler',
+                   controlnets: List[InstantIDControlnetUnit] = None,
+                   loras: List[InstantIDLora] = None,
+                   response_image_type: str = None,
+                   download_images: bool = True,
+                   callback: callable = None,
+                   ):
+        face_images = [input_image_to_pil(img) for img in face_images]
+        ref_images = ref_images and [input_image_to_pil(img) for img in ref_images]
+
+        face_image_assets_ids = self.upload_assets(face_images)
+        if ref_images is not None and len(ref_images) > 0:
+            ref_image_assets_ids = self.upload_assets(ref_images)
+        else:
+            ref_image_assets_ids = face_image_assets_ids[:1]
+
+        if width is None or height is None:
+            ref_img = ref_images[0] if ref_images and len(ref_images) > 0 else face_images[0]
+            width, height = ref_img.size
+
+        payload_data = InstantIDRequest(
+            face_image_assets_ids=face_image_assets_ids,
+            ref_image_assets_ids=ref_image_assets_ids,
+            model_name=model_name,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            id_strength=id_strength,
+            adapter_strength=adapter_strength,
+            steps=steps,
+            seed=seed,
+            guidance_scale=guidance_scale,
+            sampler_name=sampler_name,
+            controlnet=InstantIDRequestControlNet(units=controlnets),
+            loras=loras,
+        )
+
+        if response_image_type is not None:
+            payload_data.set_image_type(response_image_type)
+
+        res = self._post("/v3/async/instant-id", payload_data.to_dict())
+        final_res = self.wait_for_task_v3(res["task_id"], callback=callback)
+        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
+        else:
+            if download_images:
+                final_res.download_images()
+
+        return final_res
+
+    def raw_img2img_v3(self, req: Img2ImgV3Request, extra: CommonV3Extra = None) -> Img2ImgV3Response:
+        _req = CommonV3Request(request=req, extra=extra)
+
+        return Img2ImgV3Response.from_dict(self._post('/v3/async/img2img', _req.to_dict()))
+
+    def img2img_v3(self, model_name: str, input_image: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Img2V3ImgLoRA] = None, embeddings: List[Img2ImgV3Embedding] = None, controlnet_units: List[Img2ImgV3ControlNetUnit] = None, download_images: bool = True, callback: callable = None, **kwargs) -> Img2ImgV3Response:
+        input_image = input_image_to_base64(input_image)
+        req = Img2ImgV3Request(
+            model_name=model_name,
+            image_base64=input_image,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            sd_vae=sd_vae,
+            steps=steps,
+            clip_skip=clip_skip,
+            loras=loras,
+            embeddings=embeddings,
+        )
+        if height is not None:
+            req.height = height
+        if width is not None:
+            req.width = width
+        if sampler_name is not None:
+            req.sampler_name = sampler_name
+        if image_num is not None:
+            req.image_num = image_num
+        if guidance_scale is not None:
+            req.guidance_scale = guidance_scale
+        if strength is not None:
+            req.strength = strength
+        if seed is not None:
+            req.seed = seed
+        if controlnet_units is not None:
+            for unit in controlnet_units:
+                unit.image_base64 = input_image_to_base64(unit.image_base64)
+            req.controlnet = Img2ImgV3ControlNet(units=controlnet_units)
+
+        #     req.set_image_type(response_image_type)
+        extra = CommonV3Extra(**kwargs)
+        if response_image_type is not None:
+            extra.response_image_type = response_image_type
+
+        res = self.raw_img2img_v3(req, extra)
+        final_res = self.wait_for_task_v3(res.task_id, callback=callback)
+        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+        else:
+            if download_images:
+                final_res.download_images()
+        return final_res
+
+    def raw_txt2img_v3(self, req: Txt2ImgV3Request, extra: CommonV3Extra = None) -> Txt2ImgV3Response:
+        _req = CommonV3Request(request=req, extra=extra)
+        return Txt2ImgV3Response.from_dict(self._post('/v3/async/txt2img', _req.to_dict()))
+
+    def txt2img_v3(self, model_name: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Txt2ImgV3LoRA] = None, embeddings: List[Txt2ImgV3Embedding] = None, hires_fix: Txt2ImgV3HiresFix = None, refiner: Txt2ImgV3Refiner = None, download_images: bool = True, callback: callable = None, **kwargs) -> Txt2ImgV3Response:
+        req = Txt2ImgV3Request(
+            model_name=model_name,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            sd_vae=sd_vae,
+            clip_skip=clip_skip,
+            loras=loras,
+            embeddings=embeddings,
+            hires_fix=hires_fix,
+            refiner=refiner,
+        )
+        if steps is not None:
+            req.steps = steps
+
+        if height is not None:
+            req.height = height
+        if width is not None:
+            req.width = width
+        if sampler_name is not None:
+            req.sampler_name = sampler_name
+        if image_num is not None:
+            req.image_num = image_num
+        if guidance_scale is not None:
+            req.guidance_scale = guidance_scale
+        if strength is not None:
+            req.strength = strength
+        if seed is not None:
+            req.seed = seed
+        extra = CommonV3Extra(**kwargs)
+        if response_image_type is not None:
+            extra.response_image_type = response_image_type
+
+        res = self.raw_txt2img_v3(req, extra)
+        final_res = self.wait_for_task_v3(res.task_id, callback=callback)
+        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+        else:
+            if download_images:
+                final_res.download_images()
         return final_res
 
     def user_info(self) -> UserInfoResponse:
