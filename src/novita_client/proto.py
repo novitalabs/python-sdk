@@ -142,6 +142,12 @@ class ADEtailer:
 
 # --------------- Text2Image ---------------
 
+@dataclass
+class Txt2ImgExtra(JSONe):
+    enable_nsfw_detection: bool = False
+    nsfw_detection_level: int = 0
+    enable_progress_info: bool = True
+
 
 @dataclass
 class Txt2ImgRequest(JSONe):
@@ -173,6 +179,8 @@ class Txt2ImgRequest(JSONe):
     sd_refiner: Optional[Refiner] = None
 
     adetailer: Optional[ADEtailer] = None
+
+    extra: Optional[Txt2ImgExtra] = None
 
 
 class Txt2ImgResponseCode(Enum):
@@ -212,6 +220,12 @@ class Txt2ImgResponse(JSONe):
 
 
 @dataclass
+class Img2ImgExtra(JSONe):
+    enable_nsfw_detection: bool = False
+    nsfw_detection_level: int = 0
+    enable_progress_info: bool = True
+
+@dataclass
 class Img2ImgRequest(JSONe):
     model_name: str = 'dreamshaper_5BakedVae.safetensors'
     sampler_name: str = None
@@ -242,6 +256,8 @@ class Img2ImgRequest(JSONe):
     controlnet_no_detectmap: Optional[bool] = False
 
     sd_refiner: Optional[Refiner] = None
+
+    extra: Optional[Img2ImgExtra] = None
 
 
 class Img2ImgResponseCode(Enum):
@@ -297,6 +313,20 @@ class ProgressResponseStatusCode(Enum):
 
 
 @dataclass
+class ProgressDataDebugInfo(JSONe):
+    submit_time_ms: int
+    execution_time_ms: int
+    txt2img_time_ms: int
+    finish_time_ms: int
+
+
+@dataclass
+class ProgressDataNSFWResult(JSONe):
+    valid: bool = False
+    confidence: float = 0.0
+
+
+@dataclass
 class ProgressData(JSONe):
     status: ProgressResponseStatusCode
     progress: int
@@ -310,6 +340,10 @@ class ProgressData(JSONe):
     execution_time: Optional[str] = ""
     txt2img_time: Optional[str] = ""
     finish_time: Optional[str] = ""
+
+    enable_nsfw_detection: Optional[bool] = False
+    nsfw_detection_result: Optional[Union[List[ProgressDataNSFWResult], None]] = None
+    debug_info: Optional[ProgressDataDebugInfo] = None
 
 
 class ProgressResponseCode(Enum):
@@ -602,10 +636,17 @@ class ReplaceObjectResponse(JSONe):
 # }
 
 @dataclass
+class V3TaskImageNSFWDetectionResult(JSONe):
+    valid: bool
+    confidence: float
+
+
+@dataclass
 class V3TaskImage(JSONe):
     image_url: str
     image_type: str
     image_url_ttl: int
+    nsfw_detection_result: Optional[V3TaskImageNSFWDetectionResult] = None
 
 
 @dataclass
@@ -631,6 +672,25 @@ class V3AsyncSubmitResponse(JSONe):
 class V3TaskResponseTask(JSONe):
     task_id: str
     status: V3TaskResponseStatus
+    reason: Optional[str] = None
+    task_type: Optional[str] = None
+    eta: Optional[int] = None
+    progress_percent: Optional[int] = None
+
+
+@dataclass
+class V3TaskResponseDebugInfo(JSONe):
+    submit_time_ms: int
+    execute_time_ms: int
+    complete_time_ms: int
+    request_info: str = None
+
+
+@dataclass
+class V3TaskResponseExtra(JSONe):
+    seed: Optional[int] = None
+    enable_nsfw_detection: Optional[bool] = False
+    debug_info: Optional[V3TaskResponseDebugInfo] = None
 
 
 @dataclass
@@ -638,6 +698,7 @@ class V3TaskResponse(JSONe):
     task: V3TaskResponseTask
     images: List[V3TaskImage] = None
     videos: List[V3TaskVideo] = None
+    extra: V3TaskResponseExtra = None
 
     def finished(self):
         return self.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED or self.task.status == V3TaskResponseStatus.TASK_STATUS_FAILED

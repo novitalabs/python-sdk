@@ -189,6 +189,7 @@ class NovitaClient:
 
     def wait_for_task_v3(self, task_id, wait_for: int = 300, callback: callable = None) -> V3TaskResponse:
         i = 0
+
         while i < wait_for:
             logger.info(f"Waiting for task {task_id} to complete")
 
@@ -202,6 +203,7 @@ class NovitaClient:
 
             if progress.finished():
                 logger.info(f"Task {task_id} completed")
+                logging.debug(f"Task {progress.task.task_type}/{progress.task.task_id} debug_info: {progress.extra.debug_info}")
                 return progress
 
             sleep(settings.DEFAULT_POLL_INTERVAL)
@@ -860,7 +862,7 @@ class NovitaClient:
         _req = CommonV3Request(request=req, extra=extra)
         return Txt2ImgV3Response.from_dict(self._post('/v3/async/txt2img', _req.to_dict()))
 
-    def txt2img_v3(self, model_name: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Txt2ImgV3LoRA] = None, embeddings: List[Txt2ImgV3Embedding] = None, hires_fix: Txt2ImgV3HiresFix = None, refiner: Txt2ImgV3Refiner = None, download_images: bool = True, callback: callable = None, **kwargs) -> Txt2ImgV3Response:
+    def txt2img_v3(self, model_name: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Txt2ImgV3LoRA] = None, embeddings: List[Txt2ImgV3Embedding] = None, hires_fix: Txt2ImgV3HiresFix = None, refiner: Txt2ImgV3Refiner = None, download_images: bool = True, callback: callable = None, **kwargs) -> V3TaskResponse:
         req = Txt2ImgV3Request(
             model_name=model_name,
             prompt=prompt,
@@ -896,7 +898,8 @@ class NovitaClient:
         res = self.raw_txt2img_v3(req, extra)
         final_res = self.wait_for_task_v3(res.task_id, callback=callback)
         if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+            logger.error(f"Task {res.task_id} failed with status {final_res}")
+            raise NovitaResponseError(f"Task {res.task_id} failed with status {final_res.task.status}")
         else:
             if download_images:
                 final_res.download_images()
