@@ -99,7 +99,7 @@ class NovitaClient:
 
         return response.json()
 
-    def txt2img(self, request: Txt2ImgRequest) -> Txt2ImgResponse:
+    def txt2img(self, request: Txt2ImgRequest, enterprise_plan=False) -> Txt2ImgResponse:
         """Asynchronously generate images from request
 
         Args:
@@ -108,11 +108,11 @@ class NovitaClient:
         Returns:
             Txt2ImgResponse: The response object containing the task ID and status URL.
         """
-        response = self._post('/v2/txt2img', request.to_dict())
+        response = self._post('/v2/txt2img' if not enterprise_plan else '/v2/enterprise/txt2img', request.to_dict())
 
         return Txt2ImgResponse.from_dict(response)
 
-    def progress(self, task_id: str) -> ProgressResponse:
+    def progress(self, task_id: str, enterprise_plan=False) -> ProgressResponse:
         """Get the progress of a task.
 
         Args:
@@ -121,7 +121,7 @@ class NovitaClient:
         Returns:
             ProgressResponse: The response object containing the progress information for the task.
         """
-        response = self._get('/v2/progress', {
+        response = self._get('/v2/progress' if not enterprise_plan else '/v2/enterprise/progress', {
             'task_id': task_id,
         })
 
@@ -133,7 +133,7 @@ class NovitaClient:
         })
         return V3TaskResponse.from_dict(response)
 
-    def img2img(self, request: Img2ImgRequest) -> Img2ImgResponse:
+    def img2img(self, request: Img2ImgRequest, enterprise_plan=False) -> Img2ImgResponse:
         """Asynchronously generate images from request
 
         Args:
@@ -142,11 +142,11 @@ class NovitaClient:
         Returns:
             Img2ImgResponse: The response object containing the task ID and status URL.
         """
-        response = self._post('/v2/img2img', request.to_dict())
+        response = self._post('/v2/img2img' if not enterprise_plan else '/v2/enterprise/img2img', request.to_dict())
 
         return Img2ImgResponse.from_dict(response)
 
-    def wait_for_task(self, task_id, wait_for: int = 300, callback: callable = None) -> ProgressResponse:
+    def wait_for_task(self, task_id, wait_for: int = 300, callback: callable = None, enterprise_plan=False) -> ProgressResponse:
         """Wait for a task to complete
 
         This method waits for a task to complete by periodically checking its progress. If the task is not completed within the specified time, an NovitaTimeoutError is raised.
@@ -166,7 +166,7 @@ class NovitaClient:
         while i < wait_for:
             logger.info(f"Waiting for task {task_id} to complete")
 
-            progress = self.progress(task_id)
+            progress = self.progress(task_id, enterprise_plan=enterprise_plan)
 
             if callback and callable(callback):
                 try:
@@ -211,7 +211,7 @@ class NovitaClient:
         raise NovitaTimeoutError(
             f"Task {task_id} failed to complete in {wait_for} seconds")
 
-    def sync_txt2img(self, request: Txt2ImgRequest, download_images=True, callback: callable = None) -> ProgressResponse:
+    def sync_txt2img(self, request: Txt2ImgRequest, download_images=True, callback: callable = None, enterprise_plan=False) -> ProgressResponse:
         """Synchronously generate images from request, optionally download images
 
         This method generates images synchronously from the given request object. If download_images is set to True, the generated images will be downloaded.
@@ -226,17 +226,17 @@ class NovitaClient:
         Returns:
             ProgressResponse: The response object containing the task status and generated images.
         """
-        response = self.txt2img(request)
+        response = self.txt2img(request, enterprise_plan=enterprise_plan)
 
         if response.data is None:
             raise NovitaResponseError(f"Text to Image generation failed with response {response.msg}, code: {response.code}")
 
-        res = self.wait_for_task(response.data.task_id, callback=callback)
+        res = self.wait_for_task(response.data.task_id, callback=callback, enterprise_plan=enterprise_plan)
         if download_images:
             res.download_images()
         return res
 
-    def sync_img2img(self, request: Img2ImgRequest, download_images=True, callback: callable = None) -> ProgressResponse:
+    def sync_img2img(self, request: Img2ImgRequest, download_images=True, callback: callable = None, enterprise_plan=False) -> ProgressResponse:
         """Synchronously generate images from request, optionally download images
 
         Args:
@@ -246,17 +246,17 @@ class NovitaClient:
         Returns:
             ProgressResponse: The response object containing the task status and generated images.
         """
-        response = self.img2img(request)
+        response = self.img2img(request, enterprise_plan=enterprise_plan)
 
         if response.data is None:
             raise NovitaResponseError(f"Image to Image generation failed with response {response.msg}, code: {response.code}")
 
-        res = self.wait_for_task(response.data.task_id, callback=callback)
+        res = self.wait_for_task(response.data.task_id, callback=callback, enterprise_plan=enterprise_plan)
         if download_images:
             res.download_images()
         return res
 
-    def sync_upscale(self, request: UpscaleRequest, download_images=True, callback: callable = None) -> ProgressResponse:
+    def sync_upscale(self, request: UpscaleRequest, download_images=True, callback: callable = None, enterprise_plan=False) -> ProgressResponse:
         """Syncronously upscale image from request, optionally download images
 
         Args:
@@ -266,12 +266,12 @@ class NovitaClient:
         Returns:
             ProgressResponse: _description_
         """
-        response = self.upscale(request)
+        response = self.upscale(request, enterprise_plan=enterprise_plan)
 
         if response.data is None:
             raise NovitaResponseError(f"Upscale failed with response {response.msg}, code: {response.code}")
 
-        res = self.wait_for_task(response.data.task_id, callback=callback)
+        res = self.wait_for_task(response.data.task_id, callback=callback, enterprise_plan=enterprise_plan)
         if download_images:
             res.download_images()
         return res
