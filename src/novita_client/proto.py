@@ -225,6 +225,7 @@ class Img2ImgExtra(JSONe):
     nsfw_detection_level: int = 0
     enable_progress_info: bool = True
 
+
 @dataclass
 class Img2ImgRequest(JSONe):
     model_name: str = 'dreamshaper_5BakedVae.safetensors'
@@ -798,51 +799,38 @@ class LCMTxt2ImgResponse(JSONe):
 # --------------- ADEtailer ---------------
 
 
-class ADETailerResponseCode(Enum):
-    NORMAL = 0
-    INTERNAL_ERROR = -1
-    INVALID_JSON = 1
-    MODEL_NOT_EXISTS = 2
-    TASK_ID_NOT_EXISTS = 3
-    INVALID_AUTH = 4
-    HOST_UNAVAILABLE = 5
-    PARAM_RANGE_ERROR = 6
-    COST_BALANCE_ERROR = 7
-    SAMPLER_NOT_EXISTS = 8
-    TIMEOUT = 9
+@dataclass
+class ADETailerLoRA(JSONe):
+    model_name: str
+    strength: Optional[float] = 1.0
 
-    UNKNOWN = 100
 
-    @classmethod
-    def _missing_(cls, number):
-        return cls(cls.UNKNOWN)
+@dataclass
+class ADETailerEmbedding(JSONe):
+    model_name: str
 
 
 @dataclass
 class ADETailerRequest(JSONe):
     model_name: str
-    input_image: str
     prompt: str
+    image_assets_ids: List[str] = None
+    image_urls: List[str] = None
+    loras: List[ADETailerLoRA] = None
+    embeddings: List[ADETailerEmbedding] = None
+    guidance_scale: Optional[float] = 7.5
+    sampler_name: Optional[str] = Samplers.DPMPP_KARRAS
     steps: Optional[int] = 20
     strength: Optional[float] = 0.3
     negative_prompt: Optional[str] = None
-    vae: Optional[str] = None
+    sd_vae: Optional[str] = None
     seed: Optional[int] = None
     clip_skip: Optional[int] = None
 
 
 @dataclass
-class ADETailerResponseData(JSONe):
-    task_id: str
-    warn: Optional[str] = None
-
-
-@dataclass
 class ADETailerResponse(JSONe):
-    code: ADETailerResponseCode
-    msg: str
-    data: Optional[ADETailerResponseData] = None
-
+    task_id: str
 
 # --------------- Training ---------------
 

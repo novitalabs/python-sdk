@@ -291,36 +291,82 @@ class NovitaClient:
 
         return UpscaleResponse.from_dict(response)
 
-    def adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None,  download_images=True, callback: callable = None) -> ProgressResponse:
-        response = self.async_adetailer(model_name, image, prompt, steps, strength, negative_prompt, vae, seed, clip_skip)
-        if response.data is None:
-            raise NovitaResponseError(f"Upscale failed with response {response.msg}, code: {response.code}")
+    def raw_adetailer(self, req: ADETailerRequest, extra: CommonV3Extra = None) -> ADETailerResponse:
+        _req = CommonV3Request(request=req, extra=extra)
 
-        res = self.wait_for_task(response.data.task_id, callback=callback)
-        if download_images:
-            res.download_images()
-        return res
+        return ADETailerResponse.from_dict(self._post('/v3/async/adetailer', _req.to_dict()))
 
-    def async_adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None) -> ProgressResponse:
-        image_b64 = input_image_to_base64(image)
-        request = ADETailerRequest(
+    def adetailer(self, model_name: str, input_images: List[InputImage], prompt: str, sampler_name=None, guidance_scale=None, steps=None, strength=None, loras: List[ADETailerLoRA] = None, embeddings: List[ADETailerEmbedding] = None, negative_prompt=None, sd_vae=None, seed=None, clip_skip=None,  download_images=True, callback: callable = None) -> V3TaskResponse:
+        req = ADETailerRequest(
             model_name=model_name,
-            input_image=image_b64,
             prompt=prompt,
         )
         if steps is not None:
-            request.steps = steps
+            req.steps = steps
         if strength is not None:
-            request.strength = strength
+            req.strength = strength
         if negative_prompt is not None:
-            request.negative_prompt = negative_prompt
-        if vae is not None:
-            request.vae = vae
+            req.negative_prompt = negative_prompt
+        if sd_vae is not None:
+            req.sd_vae = sd_vae
         if seed is not None:
-            request.seed = seed
+            req.seed = seed
         if clip_skip is not None:
-            request.clip_skip = clip_skip
-        return ADETailerResponse.from_dict(self._post('/v2/adetailer', request.to_dict()))
+            req.clip_skip = clip_skip
+        if loras is not None:
+            req.loras = loras
+        if embeddings is not None:
+            req.embeddings = embeddings
+        if guidance_scale is not None:
+            req.guidance_scale = guidance_scale
+        if sampler_name is not None:
+            req.sampler_name = sampler_name
+
+        mode = "assets"  # or assets
+        for input_image in input_images:
+            if isinstance(input_image, str) and input_image.startswith("https://faas-output-image"):
+                mode = "s3_url"
+                break
+
+        if mode == "assets":
+            req.image_assets_ids = self.upload_assets([input_image_to_base64(image) for image in input_images])
+        else:
+            req.image_urls = input_images
+
+        res = self.raw_adetailer(req)
+
+        return self.wait_for_task_v3(res.task_id, callback=callback)
+
+        # def adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None,  download_images=True, callback: callable = None) -> ProgressResponse:
+        #     response = self.async_adetailer(model_name, image, prompt, steps, strength, negative_prompt, vae, seed, clip_skip)
+        #     if response.data is None:
+        #         raise NovitaResponseError(f"Upscale failed with response {response.msg}, code: {response.code}")
+
+        #     res = self.wait_for_task(response.data.task_id, callback=callback)
+        #     if download_images:
+        #         res.download_images()
+        #     return res
+
+        # def async_adetailer(self, model_name: str, image: InputImage, prompt: str, steps=None, strength=None, negative_prompt=None, vae=None, seed=None, clip_skip=None) -> ProgressResponse:
+        #     image_b64 = input_image_to_base64(image)
+        #     request = ADETailerRequest(
+        #         model_name=model_name,
+        #         input_image=image_b64,
+        #         prompt=prompt,
+        #     )
+        #     if steps is not None:
+        #         request.steps = steps
+        #     if strength is not None:
+        #         request.strength = strength
+        #     if negative_prompt is not None:
+        #         request.negative_prompt = negative_prompt
+        #     if vae is not None:
+        #         request.vae = vae
+        #     if seed is not None:
+        #         request.seed = seed
+        #     if clip_skip is not None:
+        #         request.clip_skip = clip_skip
+        #     return ADETailerResponse.from_dict(self._post('/v2/adetailer', request.to_dict()))
 
     def cleanup(self, image: InputImage, mask: InputImage, response_image_type=None) -> CleanupResponse:
         image_b64 = input_image_to_base64(image)
