@@ -9,7 +9,7 @@ this SDK is based on the official [API documentation](https://docs.novita.ai/)
 ## Installation
 
 ```bash
-pip install novita
+pip install novita-client
 ```
 
 ## Examples
