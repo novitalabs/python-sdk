@@ -163,6 +163,39 @@ def test_replace_background():
     base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_replace_background.{res.image_type}"))
 
 
+def test_relight():
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+    res = client.relight(
+        image = "https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
+        prompt = "a sunny day",
+        steps=15,
+        sampler_name="Euler a",
+        guidance_scale=10,
+        strength=0.5,
+        clip_skip=4,
+    )
+
+    assert (res.image_file is not None)
+
+    test_path = os.path.join(os.path.abspath(
+        os.path.dirname(__name__)), "tests/data")
+    
+    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_relight.{res.image_type}"))
+
+
+def test_remove_watermark():
+    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+    res = client.remove_watermark(
+        image = "https://imgv3.fotor.com/images/slider-image/Photo-of-hot-air-balloons-over-a-hilly-landscape-at-dusk-with-watermarks-on-it.jpg",
+    )
+
+    assert (res.image_file is not None)
+
+    test_path = os.path.join(os.path.abspath(
+        os.path.dirname(__name__)), "tests/data")
+    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_remove_watermark.{res.image_type}"))
+
+
 def test_replace_sky():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
