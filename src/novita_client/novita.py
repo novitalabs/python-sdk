@@ -527,7 +527,10 @@ class NovitaClient:
                         embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None) -> Txt2VideoResponse:
         res: Txt2VideoResponse = self.async_txt2video(model_name, height, width, steps, prompts, guidance_scale, seed,negative_prompt, loras, embeddings, clip_skip, closed_loop,response_video_type)
         final_res = self.wait_for_task_v3(res.task_id)
-        final_res.download_videos()
+        if final_res.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            final_res.download_videos()
+        else:
+            raise NovitaResponseError(f"")
         return final_res
     
     
@@ -618,10 +621,11 @@ class NovitaClient:
                 inpainting_mask_invert: int=0, initial_noise_multiplier: float=0.5) -> InpaintingResponse:
         res: InpaintingResponse = self.async_inpainting(model_name, image, mask, prompt, image_num, sampler_name, steps, guidance_scale, seed, mask_blur, negative_prompt, sd_vae, loras, embeddings, clip_skip, strength, inpainting_full_res, inpainting_full_res_padding, inpainting_mask_invert, initial_noise_multiplier)
         final_res = self.wait_for_task_v3(res.task_id)
-        if final_res.task.status == "TASK_STATUS_SUCCEED":
+        if final_res.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED:
             final_res.download_images()
         else:
             logging.error(f"Failed to inpaint image: {final_res.task.status}")
+            raise NovitaResponseError(f"Task {final_res.task_id} failed with status {final_res.task.status}")
         return final_res
 
     def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None) -> MergeFaceResponse:
