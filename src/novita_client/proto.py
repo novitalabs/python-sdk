@@ -1063,6 +1063,42 @@ class TrainingTaskList(list):
     def sort_by_created_at(self):
         return TrainingTaskList(sorted(self, key=lambda x: x.created_at, reverse=True))
 
+# --------------- Text to Video ---------------
+@dataclass
+class Txt2VideoLoRA(JSONe):
+    model_name: str
+    strength: float = 1.0
+
+@dataclass
+class Txt2VideoEmbedding(JSONe):
+    model_name: str
+
+@dataclass
+class Txt2VideoPrompt(JSONe):
+    prompt: str
+    frames: int
+
+@dataclass
+class Txt2VideoRequest(JSONe):
+    model_name: str
+    prompts: List[Txt2VideoPrompt]
+    height: int
+    width: int
+    steps: int
+    guidance_scale: float
+    negative_prompt: Optional[str] = None
+    loras: List[Txt2VideoLoRA] = None
+    embeddings: List[Txt2VideoEmbedding] = None
+    clip_skip: int = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_video_type(self, video_type: str):
+        self.extra['response_video_type'] = video_type
+
+@dataclass
+class Txt2VideoResponse(JSONe):
+    task_id: str
+
 
 # --------------- Image to Video ---------------
 
@@ -1083,6 +1119,7 @@ class Img2VideoRequest(JSONe):
     motion_bucket_id: Optional[int] = 127
     enable_frame_interpolation: Optional[bool] = False
     cond_aug: Optional[float] = 0.02
+    #extra: Dict = field(default_factory=lambda: dict())
 
 
 @dataclass

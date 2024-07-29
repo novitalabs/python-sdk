@@ -512,6 +512,25 @@ class NovitaClient:
             request.set_image_type(response_image_type)
         return V3AsyncSubmitResponse.from_dict(self._post('/v3/async/replace-object', request.to_dict()))
 
+    def async_txt2video(self,model_name:str, height:int,width:int,steps:int,prompts:List[Txt2VideoPrompt],guidance_scale:float,seed:int=None,negative_prompt: Optional[str] = None,loras:List[Txt2VideoLoRA]=None,\
+                        embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None) -> Txt2VideoResponse:
+        request = Txt2VideoRequest(model_name=model_name,height=height,width=width,steps=steps,prompts=prompts,negative_prompt=negative_prompt,guidance_scale=guidance_scale,loras=loras,embeddings=embeddings,clip_skip=clip_skip)
+        if seed is not None:
+            request.seed = seed
+        if closed_loop is not None:
+            request.closed_loop = closed_loop
+        if response_video_type is not None:
+            request.set_video_type(response_video_type)
+        return Txt2VideoResponse.from_dict(self._post('/v3/async/txt2video', request.to_dict()))
+    
+    def txt2video(self,model_name:str, height:int,width:int,steps:int,prompts:List[Txt2VideoPrompt],guidance_scale:float,negative_prompt: Optional[str] = None,seed:int=None,loras:List[Txt2VideoLoRA]=None,\
+                        embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None) -> Txt2VideoResponse:
+        res: Txt2VideoResponse = self.async_txt2video(model_name, height, width, steps, prompts, guidance_scale, seed,negative_prompt, loras, embeddings, clip_skip, closed_loop,response_video_type)
+        final_res = self.wait_for_task_v3(res.task_id)
+        final_res.download_videos()
+        return final_res
+    
+    
     def async_img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02, enable_frame_interpolation: bool = False) -> Img2VideoResponse:
         image_b64 = input_image_to_base64(image)
         request = Img2VideoRequest(model_name=model_name, image_file=image_b64, steps=steps, frames_num=frames_num, frames_per_second=frames_per_second, seed=seed,
@@ -568,11 +587,10 @@ class NovitaClient:
 
     def raw_inpainting(self, req: InpaintingRequest, extra: CommonV3Extra = None) -> InpaintingResponse:
         _req = CommonV3Request(request=req, extra=extra)
-
         return InpaintingResponse.from_dict(self._post('/v3/async/inpainting', _req.to_dict()))
 
 
-    def inpainting(self, model_name: str, image: str, mask: str,\
+    def async_inpainting(self, model_name: str, image: str, mask: str,\
                 prompt: str,image_num: int,sampler_name: str, steps:int, guidance_scale: float,\
                 seed: int, mask_blur: int=None, negative_prompt: str=None,\
                 sd_vae:str=None,loras: List[InpaintingLoRA] = None,\
@@ -587,9 +605,24 @@ class NovitaClient:
                                         negative_prompt=negative_prompt, clip_skip=clip_skip, strength=strength,\
                                         inpainting_full_res=inpainting_full_res, inpainting_full_res_padding=inpainting_full_res_padding,\
                                         inpainting_mask_invert=inpainting_mask_invert, initial_noise_multiplier=initial_noise_multiplier)
-        print_filtered_dict(request.to_dict())
-        return InpaintingResponse.from_dict(self._post('/v3/async/inpainting', request.to_dict()))
+        extra = CommonV3Extra()
+        return self.raw_inpainting(request, extra)
 
+    def inpainting(self, model_name: str, image: str, mask: str,\
+                prompt: str,image_num: int,sampler_name: str, steps:int, guidance_scale: float,\
+                seed: int, mask_blur: int=None, negative_prompt: str=None,\
+                sd_vae:str=None,loras: List[InpaintingLoRA] = None,\
+                embeddings: List[InpaintingEmbedding] = None,\
+                clip_skip: int = None, strength: float = None,\
+                inpainting_full_res: int=0, inpainting_full_res_padding: int=8,\
+                inpainting_mask_invert: int=0, initial_noise_multiplier: float=0.5) -> InpaintingResponse:
+        res: InpaintingResponse = self.async_inpainting(model_name, image, mask, prompt, image_num, sampler_name, steps, guidance_scale, seed, mask_blur, negative_prompt, sd_vae, loras, embeddings, clip_skip, strength, inpainting_full_res, inpainting_full_res_padding, inpainting_mask_invert, initial_noise_multiplier)
+        final_res = self.wait_for_task_v3(res.task_id)
+        if final_res.task.status == "TASK_STATUS_SUCCEED":
+            final_res.download_images()
+        else:
+            logging.error(f"Failed to inpaint image: {final_res.task.status}")
+        return final_res
 
     def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None) -> MergeFaceResponse:
         input_image = input_image_to_base64(image)
