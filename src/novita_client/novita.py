@@ -441,6 +441,20 @@ class NovitaClient:
             request.set_image_type(response_image_type)
 
         return DoodleResponse.from_dict(self._post('/v3/doodle', request.to_dict()))
+    
+    def relight(self, input_image: str, model_name: str,lighting_preference:str, prompt: str, steps:int, sampler_name:str,guidance_scale: float, \
+                strength:float,seed:int=-1,background_image_file:str=None,negative_prompt:str=None,clip_skip:int=None,response_image_type:str=None) -> RelightResponse:
+        image_b64 = input_image_to_base64(input_image)
+        request = RelightRequest(image_file=image_b64, model_name=model_name,prompt=prompt,lighting_preference=lighting_preference,steps=steps,sampler_name = sampler_name,seed =seed, background_image_file\
+                                 = background_image_file,negative_prompt = negative_prompt,strength=strength,guidance_scale=guidance_scale)
+        if (clip_skip is not None):
+            request.clip_skip = clip_skip
+        if response_image_type is None:
+            request.set_image_type(self._default_response_image_type)
+        else:
+            request.set_image_type(response_image_type)
+
+        return RelightResponse.from_dict(self._post('/v3/relight', request.to_dict()))
 
     def mixpose(self, image: InputImage, pose_image: InputImage, response_image_type=None) -> MixPoseResponse:
         image_b64 = input_image_to_base64(image)
@@ -470,6 +484,15 @@ class NovitaClient:
         else:
             request.set_image_type(response_image_type)
         return ReplaceSkyResponse.from_dict(self._post('/v3/replace-sky', request.to_dict()))
+    
+    def remove_watermark(self, image: InputImage, response_image_type=None) -> RemoveWatermarkResponse:
+        image_b64 = input_image_to_base64(image)
+        request = RemoveWatermarkRequest(image_file=image_b64)
+        if response_image_type is None:
+            request.set_image_type(self._default_response_image_type)
+        else:
+            request.set_image_type(response_image_type)
+        return RemoveWatermarkResponse.from_dict(self._post('/v3/remove-watermark', request.to_dict()))
 
     def replace_object(self, image: InputImage, object_prompt: str, prompt: str, negative_prompt=None, response_image_type=None) -> ReplaceObjectResponse:
         res: V3AsyncSubmitResponse = self.async_replace_object(image, object_prompt, prompt, negative_prompt, response_image_type)
@@ -489,6 +512,28 @@ class NovitaClient:
             request.set_image_type(response_image_type)
         return V3AsyncSubmitResponse.from_dict(self._post('/v3/async/replace-object', request.to_dict()))
 
+    def async_txt2video(self,model_name:str, height:int,width:int,steps:int,prompts:List[Txt2VideoPrompt],guidance_scale:float,seed:int=None,negative_prompt: Optional[str] = None,loras:List[Txt2VideoLoRA]=None,\
+                        embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None) -> Txt2VideoResponse:
+        request = Txt2VideoRequest(model_name=model_name,height=height,width=width,steps=steps,prompts=prompts,negative_prompt=negative_prompt,guidance_scale=guidance_scale,loras=loras,embeddings=embeddings,clip_skip=clip_skip)
+        if seed is not None:
+            request.seed = seed
+        if closed_loop is not None:
+            request.closed_loop = closed_loop
+        if response_video_type is not None:
+            request.set_video_type(response_video_type)
+        return Txt2VideoResponse.from_dict(self._post('/v3/async/txt2video', request.to_dict()))
+    
+    def txt2video(self,model_name:str, height:int,width:int,steps:int,prompts:List[Txt2VideoPrompt],guidance_scale:float,negative_prompt: Optional[str] = None,seed:int=None,loras:List[Txt2VideoLoRA]=None,\
+                        embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None) -> Txt2VideoResponse:
+        res: Txt2VideoResponse = self.async_txt2video(model_name, height, width, steps, prompts, guidance_scale, seed,negative_prompt, loras, embeddings, clip_skip, closed_loop,response_video_type)
+        final_res = self.wait_for_task_v3(res.task_id)
+        if final_res.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            final_res.download_videos()
+        else:
+            raise NovitaResponseError(f"")
+        return final_res
+    
+    
     def async_img2video(self, image: InputImage, model_name: str, steps: int, frames_num: int, frames_per_second: int = 6, seed: int = None, image_file_resize_mode: str = Img2VideoResizeMode.CROP_TO_ASPECT_RATIO, motion_bucket_id: int = 127, cond_aug: float = 0.02, enable_frame_interpolation: bool = False) -> Img2VideoResponse:
         image_b64 = input_image_to_base64(image)
         request = Img2VideoRequest(model_name=model_name, image_file=image_b64, steps=steps, frames_num=frames_num, frames_per_second=frames_per_second, seed=seed,
@@ -501,7 +546,7 @@ class NovitaClient:
         final_res.download_videos()
         return final_res
 
-    def lcm_img2img(self, model_name: str, image: InputImage, prompt: str, negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, sd_vae: str = None, loras: List[LCMLoRA] = None, embeddings: List[LCMEmbedding] = None) -> LCMImg2ImgResponse:
+    def lcm_img2img(self, model_name: str, image: InputImage, prompt: str, image_num: int, negative_prompt: str = None, steps: int = None, guidance_scale: float = None, clip_skip: int = None, sd_vae: str = None, loras: List[LCMLoRA] = None, embeddings: List[LCMEmbedding] = None) -> LCMImg2ImgResponse:
         res = self._post('/v3/lcm-img2img', LCMImg2ImgRequest(
             input_image=input_image_to_base64(image),
             prompt=prompt,
@@ -541,6 +586,47 @@ class NovitaClient:
         else:
             request.set_image_type(response_image_type)
         return CreateTileResponse.from_dict(self._post('/v3/create-tile', request.to_dict()))
+    
+
+    def raw_inpainting(self, req: InpaintingRequest, extra: CommonV3Extra = None) -> InpaintingResponse:
+        _req = CommonV3Request(request=req, extra=extra)
+        return InpaintingResponse.from_dict(self._post('/v3/async/inpainting', _req.to_dict()))
+
+
+    def async_inpainting(self, model_name: str, image: str, mask: str,\
+                prompt: str,image_num: int,sampler_name: str, steps:int, guidance_scale: float,\
+                seed: int, mask_blur: int=None, negative_prompt: str=None,\
+                sd_vae:str=None,loras: List[InpaintingLoRA] = None,\
+                embeddings: List[InpaintingEmbedding] = None,\
+                clip_skip: int = None, strength: float = None,\
+                inpainting_full_res: int=0, inpainting_full_res_padding: int=8,\
+                inpainting_mask_invert: int=0, initial_noise_multiplier: float=0.5)\
+                        -> InpaintingResponse:
+        request = InpaintingRequest(model_name=model_name, image_base64=image, mask_image_base64=mask, \
+                                    prompt=prompt,sampler_name=sampler_name, image_num=image_num, steps=steps,\
+                                        guidance_scale=guidance_scale, seed=seed, mask_blur=mask_blur,loras= loras,embeddings=embeddings,\
+                                        negative_prompt=negative_prompt, clip_skip=clip_skip, strength=strength,\
+                                        inpainting_full_res=inpainting_full_res, inpainting_full_res_padding=inpainting_full_res_padding,\
+                                        inpainting_mask_invert=inpainting_mask_invert, initial_noise_multiplier=initial_noise_multiplier)
+        extra = CommonV3Extra()
+        return self.raw_inpainting(request, extra)
+
+    def inpainting(self, model_name: str, image: str, mask: str,\
+                prompt: str,image_num: int,sampler_name: str, steps:int, guidance_scale: float,\
+                seed: int, mask_blur: int=None, negative_prompt: str=None,\
+                sd_vae:str=None,loras: List[InpaintingLoRA] = None,\
+                embeddings: List[InpaintingEmbedding] = None,\
+                clip_skip: int = None, strength: float = None,\
+                inpainting_full_res: int=0, inpainting_full_res_padding: int=8,\
+                inpainting_mask_invert: int=0, initial_noise_multiplier: float=0.5) -> InpaintingResponse:
+        res: InpaintingResponse = self.async_inpainting(model_name, image, mask, prompt, image_num, sampler_name, steps, guidance_scale, seed, mask_blur, negative_prompt, sd_vae, loras, embeddings, clip_skip, strength, inpainting_full_res, inpainting_full_res_padding, inpainting_mask_invert, initial_noise_multiplier)
+        final_res = self.wait_for_task_v3(res.task_id)
+        if final_res.task.status == V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            final_res.download_images()
+        else:
+            logging.error(f"Failed to inpaint image: {final_res.task.status}")
+            raise NovitaResponseError(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+        return final_res
 
     def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None) -> MergeFaceResponse:
         input_image = input_image_to_base64(image)
@@ -858,7 +944,7 @@ class NovitaClient:
 
         return Img2ImgV3Response.from_dict(self._post('/v3/async/img2img', _req.to_dict()))
 
-    def img2img_v3(self, model_name: str, input_image: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Img2V3ImgLoRA] = None, embeddings: List[Img2ImgV3Embedding] = None, controlnet_units: List[Img2ImgV3ControlNetUnit] = None, download_images: bool = True, callback: callable = None, **kwargs) -> Img2ImgV3Response:
+    def img2img_v3(self, model_name: str, input_image: str, prompt: str, image_num: int, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Img2V3ImgLoRA] = None, embeddings: List[Img2ImgV3Embedding] = None, controlnet_units: List[Img2ImgV3ControlNetUnit] = None, download_images: bool = True, callback: callable = None, **kwargs) -> Img2ImgV3Response:
         input_image = input_image_to_base64(input_image)
         req = Img2ImgV3Request(
             model_name=model_name,
@@ -908,7 +994,7 @@ class NovitaClient:
         _req = CommonV3Request(request=req, extra=extra)
         return Txt2ImgV3Response.from_dict(self._post('/v3/async/txt2img', _req.to_dict()))
 
-    def txt2img_v3(self, model_name: str, prompt: str, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Txt2ImgV3LoRA] = None, embeddings: List[Txt2ImgV3Embedding] = None, hires_fix: Txt2ImgV3HiresFix = None, refiner: Txt2ImgV3Refiner = None, download_images: bool = True, callback: callable = None, **kwargs) -> V3TaskResponse:
+    def txt2img_v3(self, model_name: str, prompt: str, image_num: int, height: int = None, width: int = None, negative_prompt: str = None, sd_vae: str = None, steps: int = None, guidance_scale: float = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, loras: List[Txt2ImgV3LoRA] = None, embeddings: List[Txt2ImgV3Embedding] = None, hires_fix: Txt2ImgV3HiresFix = None, refiner: Txt2ImgV3Refiner = None, download_images: bool = True, callback: callable = None, **kwargs) -> V3TaskResponse:
         req = Txt2ImgV3Request(
             model_name=model_name,
             prompt=prompt,
@@ -953,12 +1039,37 @@ class NovitaClient:
 
     def user_info(self) -> UserInfoResponse:
         return UserInfoResponse.from_dict(self._get("/v3/user"))
+    
+    def query_model_v3(self, visibility:str = None, limit:str = None,\
+                       query:str = None, cursor:str = None,is_inpainting:bool \
+                        = False, source:str = None, is_sdxl:bool = None,\
+                            types:str= None) -> MoodelsResponseV3:
+        parameters = {}
+        if visibility is not None:
+            parameters["filter.visibility"] = visibility
+        if source is not None:
+            parameters["filter.source"] = source
+        if types is not None:
+            parameters["filter.type"] = types
+        if is_sdxl is not None:
+            parameters["filter.is_sdxl"] = is_sdxl
+        if query is not None:
+            parameters["filter.query"] = query
+        if cursor is not None:
+            parameters["pagination.cursor"] = f"c_{cursor}"
+        parameters["filter.is_inpainting"] = is_inpainting
+        if limit is not None:
+            if float(limit) > 100 or float(limit) <= 0:
+                limit = 1
+            parameters["pagination.limit"] = limit
+        res = self._get('/v3/model', params=parameters)
+        return MoodelsResponseV3.from_dict(res)
 
     def models_v3(self, refresh=False) -> ModelListV3:
         if self._model_list_cache_v3 is None or len(self._model_list_cache_v3) == 0 or refresh:
             visibilities = ["public", "private"]
             ret = []
-            for visibilitiy in visibilities:
+            for visibilitiy in visibilities: #interesting spelling :)
                 offset = 0
                 page_size = 100
                 while True:

@@ -128,6 +128,7 @@ class Refiner:
     checkpoint: str
     switch_at: float
 
+
 # --------------- ADEtailer ---------------
 
 
@@ -138,6 +139,9 @@ class ADEtailer:
     steps: Optional[int] = 20
     strength: Optional[float] = 0.5
     seed: Optional[int] = None
+
+
+
 
 
 # --------------- Text2Image ---------------
@@ -582,6 +586,33 @@ class ReplaceBackgroundResponse(JSONe):
     image_file: str
     image_type: str
 
+# --------------- Relight ---------------
+@dataclass
+class RelightRequest(JSONe):
+    image_file: str
+    prompt: str
+    model_name: str
+    lighting_preference: str
+    steps: int
+    sampler_name: str
+    guidance_scale: float
+    strength: float
+    seed: int = -1
+    background_image_file: Optional[str] = None
+    negative_prompt: Optional[str] = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+@dataclass
+class RelightResponse(JSONe):
+    image_file: str
+    image_type: str
+
+
+
 # --------------- Replace Sky ---------------
 
 
@@ -597,6 +628,21 @@ class ReplaceSkyRequest(JSONe):
 
 @dataclass
 class ReplaceSkyResponse(JSONe):
+    image_file: str
+    image_type: str
+
+# --------------- Remove Watermark ---------------
+
+@dataclass
+class RemoveWatermarkRequest(JSONe):
+    image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+@dataclass
+class RemoveWatermarkResponse(JSONe):
     image_file: str
     image_type: str
 
@@ -754,6 +800,9 @@ class CreateTileRequest(JSONe):
 class CreateTileResponse(JSONe):
     image_file: str
     image_type: str
+
+
+
 
 # --------------- Merge Face ---------------
 
@@ -1014,6 +1063,42 @@ class TrainingTaskList(list):
     def sort_by_created_at(self):
         return TrainingTaskList(sorted(self, key=lambda x: x.created_at, reverse=True))
 
+# --------------- Text to Video ---------------
+@dataclass
+class Txt2VideoLoRA(JSONe):
+    model_name: str
+    strength: float = 1.0
+
+@dataclass
+class Txt2VideoEmbedding(JSONe):
+    model_name: str
+
+@dataclass
+class Txt2VideoPrompt(JSONe):
+    prompt: str
+    frames: int
+
+@dataclass
+class Txt2VideoRequest(JSONe):
+    model_name: str
+    prompts: List[Txt2VideoPrompt]
+    height: int
+    width: int
+    steps: int
+    guidance_scale: float
+    negative_prompt: Optional[str] = None
+    loras: List[Txt2VideoLoRA] = None
+    embeddings: List[Txt2VideoEmbedding] = None
+    clip_skip: int = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_video_type(self, video_type: str):
+        self.extra['response_video_type'] = video_type
+
+@dataclass
+class Txt2VideoResponse(JSONe):
+    task_id: str
+
 
 # --------------- Image to Video ---------------
 
@@ -1034,6 +1119,7 @@ class Img2VideoRequest(JSONe):
     motion_bucket_id: Optional[int] = 127
     enable_frame_interpolation: Optional[bool] = False
     cond_aug: Optional[float] = 0.02
+    #extra: Dict = field(default_factory=lambda: dict())
 
 
 @dataclass
@@ -1281,6 +1367,64 @@ class Txt2ImgV3Request(JSONe):
 class Txt2ImgV3Response(JSONe):
     task_id: str
 
+
+# --------------- Inpainting ---------------
+@dataclass
+class InpaintingLoRA(JSONe):
+    model_name: str
+    strength: Optional[float] = 1.0
+
+@dataclass
+class InpaintingEmbedding(JSONe):
+    model_name: str
+
+
+@dataclass
+class InpaintingExtra(JSONe):
+    response_image_type: str = "png"
+    nsfw_detection_level: int = 0
+    custom_storage: Dict[str, Any] = field(default_factory=lambda: dict())
+    enterprise_plan: Dict[str, Any] = field(default_factory=lambda: dict())
+    enable_nsfw_detection: bool = False
+
+
+
+
+@dataclass
+class InpaintingRequest(JSONe):
+    model_name: str
+    image_base64: str
+    mask_image_base64: str
+    prompt: str
+    image_num: int
+    steps: int
+    guidance_scale: float
+    seed: int
+    sampler_name: str
+    negative_prompt: str = ""
+    mask_blur: int = None
+    sd_vae: str = ""
+    loras: Optional[List[InpaintingLoRA]] = None
+    embeddings: Optional[List[InpaintingEmbedding]] = None
+    clip_skip: int = 0
+    strength: float = 1.0
+    inpainting_full_res : bool = False
+    inpainting_full_res_padding: int = 8
+    inpainting_mask_invert: bool = False
+    initial_noise_multiplier: float = 0.5
+    
+
+
+
+
+@dataclass
+class InpaintingResponse(JSONe):
+    task_id: str
+
+
+
+
+
 # --------------- Model ---------------
 
 
@@ -1515,6 +1659,8 @@ class ModelsPaginationV3(JSONe):
 class MoodelsResponseV3(JSONe):
     models: List[ModelInfoV3] = None
     pagination: ModelsPaginationV3 = None
+
+
 
 
 # --------------- User Info ---------------
