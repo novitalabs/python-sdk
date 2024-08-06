@@ -545,6 +545,16 @@ class NovitaClient:
         final_res = self.wait_for_task_v3(res.task_id)
         final_res.download_videos()
         return final_res
+    
+    def async_img2video_motion(self,image_assets_id:str,motion_assets_id:str,seed:int=None):
+        request = Img2VideoMotionRequest(image_assets_id=image_assets_id,motion_assets_id=motion_assets_id,seed=seed)
+        return Img2VideoMotionResponse.from_dict(self.post('/v3/async/img2video-motion',request.to_dict()))
+
+    def img2video_motion(self,image_assets_id:str,motion_assets_id:str,seed:int=None):
+        res: Img2VideoMotionResponse = self.async_img2video_motion(image_assets_id,motion_assets_id,seed)
+        final_res = self.wait_for_task_v3(res.task_id)
+        return final_res
+
 
     def lcm_img2img(self, model_name: str, image: InputImage, prompt: str, image_num: int, negative_prompt: str = None, steps: int = None, guidance_scale: float = None, clip_skip: int = None, sd_vae: str = None, loras: List[LCMLoRA] = None, embeddings: List[LCMEmbedding] = None) -> LCMImg2ImgResponse:
         res = self._post('/v3/lcm-img2img', LCMImg2ImgRequest(
@@ -604,10 +614,10 @@ class NovitaClient:
                         -> InpaintingResponse:
         request = InpaintingRequest(model_name=model_name, image_base64=image, mask_image_base64=mask, \
                                     prompt=prompt,sampler_name=sampler_name, image_num=image_num, steps=steps,\
-                                        guidance_scale=guidance_scale, seed=seed, mask_blur=mask_blur,loras= loras,embeddings=embeddings,\
-                                        negative_prompt=negative_prompt, clip_skip=clip_skip, strength=strength,\
-                                        inpainting_full_res=inpainting_full_res, inpainting_full_res_padding=inpainting_full_res_padding,\
-                                        inpainting_mask_invert=inpainting_mask_invert, initial_noise_multiplier=initial_noise_multiplier)
+                                    guidance_scale=guidance_scale, seed=seed, mask_blur=mask_blur,loras= loras,embeddings=embeddings,\
+                                    negative_prompt=negative_prompt, clip_skip=clip_skip, strength=strength,\
+                                    inpainting_full_res=inpainting_full_res, inpainting_full_res_padding=inpainting_full_res_padding,\
+                                    inpainting_mask_invert=inpainting_mask_invert, initial_noise_multiplier=initial_noise_multiplier)
         extra = CommonV3Extra()
         return self.raw_inpainting(request, extra)
 
@@ -627,6 +637,20 @@ class NovitaClient:
             logging.error(f"Failed to inpaint image: {final_res.task.status}")
             raise NovitaResponseError(f"Task {final_res.task_id} failed with status {final_res.task.status}")
         return final_res
+    
+    def img2mask(self, image: InputImage,response_image_type=None) -> Img2MaskResponse:
+        input_image = input_image_to_base64(image)
+        resquest = Img2MaskRequest(image_file=input_image)
+        if response_image_type is None:
+            resquest.set_image_type(self._default_response_image_type)
+        else:
+            resquest.set_image_type(response_image_type)
+        return Img2MaskResponse.from_dict(self._post('/v3/img2mask', resquest.to_dict()))
+
+    def img2prompt(self, image: InputImage) -> Img2PromptResponse:
+        input_image = input_image_to_base64(image)
+        resquest = Img2PromptRequest(image_file=input_image)
+        return Img2PromptResponse.from_dict(self._post('/v3/img2prompt', resquest.to_dict()))
 
     def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None) -> MergeFaceResponse:
         input_image = input_image_to_base64(image)

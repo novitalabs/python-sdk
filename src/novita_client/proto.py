@@ -801,12 +801,38 @@ class CreateTileResponse(JSONe):
     image_file: str
     image_type: str
 
+# -------------- Image to Mask ---------------
+@dataclass
+class maskImage(JSONe):
+    image_file: str
+    image_type: str
+    bbox: List[int]
+    area: int
 
 
+
+@dataclass
+class Img2MaskRequest(JSONe):
+    image_file: str
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_image_type(self, image_type: str):
+        self.extra['response_image_type'] = image_type
+
+@dataclass
+class Img2MaskResponse(JSONe):
+    mask:maskImage
+
+# --------------- Image to Prompt ---------------
+@dataclass
+class Img2PromptRequest(JSONe):
+    image_file: str
+
+@dataclass
+class Img2PromptResponse(JSONe):
+    prompt: str
 
 # --------------- Merge Face ---------------
-
-
 @dataclass
 class MergeFaceRequest(JSONe):
     image_file: str
@@ -1125,6 +1151,22 @@ class Img2VideoRequest(JSONe):
 @dataclass
 class Img2VideoResponse(JSONe):
     task_id: str
+
+# --------------- Image to Video Motion ---------------
+@dataclass
+class Img2VideoMotionRequest(JSONe):
+    image_assets_id: str
+    motion_video_assets_id: str
+    seed: Optional[int] = None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_video_type(self, video_type: str):
+        self.extra['response_image_type'] = video_type
+
+@dataclass
+class Img2VideoMotionResponse(JSONe):
+    task_id: str
+
 
 # --------------- LCM Image to Image ---------------
 
