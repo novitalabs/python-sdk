@@ -1210,7 +1210,13 @@ class Img2VideoRequest(JSONe):
     motion_bucket_id: Optional[int] = 127
     enable_frame_interpolation: Optional[bool] = False
     cond_aug: Optional[float] = 0.02
-    #extra: Dict = field(default_factory=lambda: dict())
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_video_type(self, video_type: str):
+        self.extra['response_video_type'] = video_type
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
