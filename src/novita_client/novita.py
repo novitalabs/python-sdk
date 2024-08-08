@@ -663,7 +663,7 @@ class NovitaClient:
             request.set_enterprise_plan(False)
         return RestoreFaceResponse.from_dict(self._post('/v3/restore-face', request.to_dict()))
 
-    def create_tile(self, prompt: str, negative_prompt=None, width=None, height=None, response_image_type=None) -> CreateTileResponse:
+    def create_tile(self, prompt: str, negative_prompt=None, width=None, height=None, response_image_type=None, enterprise_plan=None) -> CreateTileResponse:
         request = CreateTileRequest(prompt=prompt)
         if negative_prompt is not None:
             request.negative_prompt = negative_prompt
@@ -675,6 +675,10 @@ class NovitaClient:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
+        if enterprise_plan is not None:
+            request.set_enterprise_plan(enterprise_plan)
+        else:
+            request.set_enterprise_plan(False)
         return CreateTileResponse.from_dict(self._post('/v3/create-tile', request.to_dict()))
     
 
@@ -718,13 +722,17 @@ class NovitaClient:
             raise NovitaResponseError(f"Task {final_res.task_id} failed with status {final_res.task.status}")
         return final_res
     
-    def img2mask(self, image: InputImage,response_image_type=None) -> Img2MaskResponse:
+    def img2mask(self, image: InputImage,response_image_type=None,enterprise_plan=None) -> Img2MaskResponse:
         input_image = input_image_to_base64(image)
         resquest = Img2MaskRequest(image_file=input_image)
         if response_image_type is None:
             resquest.set_image_type(self._default_response_image_type)
         else:
             resquest.set_image_type(response_image_type)
+        if enterprise_plan is not None:
+            resquest.set_enterprise_plan(enterprise_plan)
+        else:
+            resquest.set_enterprise_plan(False)
         return Img2MaskResponse.from_dict(self._post('/v3/img2mask', resquest.to_dict()))
 
     def img2prompt(self, image: InputImage) -> Img2PromptResponse:
@@ -732,7 +740,7 @@ class NovitaClient:
         resquest = Img2PromptRequest(image_file=input_image)
         return Img2PromptResponse.from_dict(self._post('/v3/img2prompt', resquest.to_dict()))
 
-    def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None) -> MergeFaceResponse:
+    def merge_face(self, image: InputImage, face_image: InputImage, response_image_type=None, enterprise_plan=None) -> MergeFaceResponse:
         input_image = input_image_to_base64(image)
         face_image = input_image_to_base64(face_image)
         request = MergeFaceRequest(image_file=input_image, face_image_file=face_image)
@@ -740,6 +748,10 @@ class NovitaClient:
             request.set_image_type(self._default_response_image_type)
         else:
             request.set_image_type(response_image_type)
+        if enterprise_plan is not None:
+            request.set_enterprise_plan(enterprise_plan)
+        else:
+            request.set_enterprise_plan(False)
         return MergeFaceResponse.from_dict(self._post('/v3/merge-face', request.to_dict()))
 
     def lcm_txt2img(self, prompt: str, width=None, height=None, steps=None, guidance_scale=None, image_num=None) -> LCMTxt2ImgResponse:
@@ -929,7 +941,8 @@ class NovitaClient:
                 raise NovitaResponseError(f"Failed to upload image: {e}")
             return ret
 
-    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, crop_face: bool = None) -> MakePhotoResponse:
+    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None,\
+                         clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, crop_face: bool = None, enterprise_plan=None) -> MakePhotoResponse:
         assets = self.upload_assets(images)
         req = MakePhotoRequest(
             model_name=model_name,
@@ -965,6 +978,11 @@ class NovitaClient:
             req.set_image_type(self._default_response_image_type)
         else:
             req.set_image_type(response_image_type)
+        
+        if enterprise_plan is not None:
+            req.set_enterprise_plan(enterprise_plan)
+        else:
+            req.set_enterprise_plan(False)
 
         return MakePhotoResponse.from_dict(self._post('/v3/async/make-photo', req.to_dict()))
 
@@ -998,6 +1016,7 @@ class NovitaClient:
                    response_image_type: str = None,
                    download_images: bool = True,
                    callback: callable = None,
+                   enterprise_plan=None
                    ):
         face_images = [input_image_to_pil(img) for img in face_images]
         ref_images = ref_images and [input_image_to_pil(img) for img in ref_images]
@@ -1032,6 +1051,10 @@ class NovitaClient:
 
         if response_image_type is not None:
             payload_data.set_image_type(response_image_type)
+        if enterprise_plan is not None:
+            payload_data.set_enterprise_plan(enterprise_plan)
+        else:
+            payload_data.set_enterprise_plan(False)
 
         res = self._post("/v3/async/instant-id", payload_data.to_dict())
         final_res = self.wait_for_task_v3(res["task_id"], callback=callback)
