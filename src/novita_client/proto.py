@@ -449,6 +449,10 @@ class CleanupRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -473,6 +477,10 @@ class OutpaintingRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -490,6 +498,10 @@ class RemoveBackgroundRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -508,6 +520,9 @@ class RemoveTextRequest(JSONe):
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
 
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 @dataclass
 class RemoveTextResponse(JSONe):
@@ -524,6 +539,10 @@ class ReimagineRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -544,6 +563,9 @@ class DoodleRequest(JSONe):
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
 
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 @dataclass
 class DoodleResponse(JSONe):
@@ -561,6 +583,10 @@ class MixPoseRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -579,7 +605,10 @@ class ReplaceBackgroundRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
-
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 @dataclass
 class ReplaceBackgroundResponse(JSONe):
@@ -606,6 +635,10 @@ class RelightRequest(JSONe):
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
 
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
+
 @dataclass
 class RelightResponse(JSONe):
     image_file: str
@@ -624,6 +657,10 @@ class ReplaceSkyRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -640,6 +677,10 @@ class RemoveWatermarkRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 @dataclass
 class RemoveWatermarkResponse(JSONe):
@@ -659,6 +700,10 @@ class ReplaceObjectRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -775,6 +820,10 @@ class RestoreFaceRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -794,6 +843,10 @@ class CreateTileRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -819,6 +872,10 @@ class Img2MaskRequest(JSONe):
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
 
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
+
 @dataclass
 class Img2MaskResponse(JSONe):
     mask:maskImage
@@ -841,6 +898,10 @@ class MergeFaceRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -1120,6 +1181,10 @@ class Txt2VideoRequest(JSONe):
 
     def set_video_type(self, video_type: str):
         self.extra['response_video_type'] = video_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 @dataclass
 class Txt2VideoResponse(JSONe):
@@ -1165,6 +1230,24 @@ class Img2VideoMotionRequest(JSONe):
 
 @dataclass
 class Img2VideoMotionResponse(JSONe):
+    task_id: str
+
+# --------------- Animated Anyone ---------------
+@dataclass
+class AnimatedAnyoneRequest(JSONe):
+    image_assets_id: str
+    pose_video_assets_id: str
+    height: int
+    width: int
+    steps: int
+    seed: int=None
+    extra: Dict = field(default_factory=lambda: dict())
+
+    def set_video_type(self, video_type: str):
+        self.extra['response_image_type'] = video_type
+
+@dataclass
+class AnimatedAnyoneResponse(JSONe):
     task_id: str
 
 
@@ -1238,6 +1321,10 @@ class MakePhotoRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
@@ -1282,6 +1369,10 @@ class InstantIDRequest(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 # --------------- Common V3 ---------------
@@ -1352,6 +1443,10 @@ class Img2ImgV3Request(JSONe):
 
     def set_image_type(self, image_type: str):
         self.extra['response_image_type'] = image_type
+    
+    def set_enterprise_plan(self, enterprise_plan: bool):
+        self.extra.setdefault('enterprise_plan', {})
+        self.extra['enterprise_plan']['enabled'] = enterprise_plan
 
 
 @dataclass
