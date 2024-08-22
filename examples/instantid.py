@@ -34,6 +34,7 @@ if __name__ == '__main__':
 			),
 		],
 		response_image_type='jpeg',
+		enterprise_plan=False,
 	)
 
 	print('res:', res)

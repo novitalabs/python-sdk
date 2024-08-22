@@ -26,6 +26,7 @@ res = client.make_photo(
     image_num=1,
     strength=0.3,
     seed=1024,
+    enterprise_plan=False
 )
 
 
