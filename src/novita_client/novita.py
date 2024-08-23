@@ -728,7 +728,7 @@ class NovitaClient:
             final_res.download_images()
         else:
             logging.error(f"Failed to inpaint image: {final_res.task.status}")
-            raise NovitaResponseError(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+            raise NovitaResponseError(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
         return final_res
     
     def img2mask(self, image: InputImage,response_image_type=None,enterprise_plan=None) -> Img2MaskResponse:
@@ -922,14 +922,19 @@ class NovitaClient:
     def upload_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
         buffs = []
         for image in images:
-            pil_image = input_image_to_pil(image)
-            buff = BytesIO()
-            if pil_image.format != "JPEG":
-                pil_image = pil_image.convert("RGB")
-                pil_image.save(buff, format="JPEG")
-            else:
-                pil_image.save(buff, format="JPEG")
-            buffs.append(buff)
+            if os.path.exists(image):
+                pil_image = input_image_to_pil(image)
+                buff = BytesIO()
+                if pil_image.format != "JPEG":
+                    pil_image = pil_image.convert("RGB")
+                    pil_image.save(buff, format="JPEG")
+                else:
+                    pil_image.save(buff, format="JPEG")
+                buffs.append(buff)
+            elif image.startswith("http") or image.startswith("https"):
+                buff = BytesIO(requests.get(image).content)
+                buffs.append(buff)
+
 
         def _upload_asset(buff):
             attempt = 5
@@ -995,12 +1000,13 @@ class NovitaClient:
 
         return MakePhotoResponse.from_dict(self._post('/v3/async/make-photo', req.to_dict()))
 
-    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, download_images: bool = True, callback: callable = None) -> V3TaskResponse:
+    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None,\
+                strength: float = None, sampler_name: str = None, response_image_type: str = None, download_images: bool = True, callback: callable = None, enterprise_plan: bool = None) -> V3TaskResponse:
         res: MakePhotoResponse = self.async_make_photo(images, model_name, prompt, loras, height, width, negative_prompt, steps,
-                                                       guidance_scale, image_num, clip_skip, seed, strength, sampler_name, response_image_type)
+                                                       guidance_scale, image_num, clip_skip, seed, strength, sampler_name, response_image_type,enterprise_plan)
         final_res = self.wait_for_task_v3(res.task_id, callback=callback)
         if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task_id} failed with status {final_res.task.status}")
+            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
         else:
             if download_images:
                 final_res.download_images()
@@ -1027,8 +1033,8 @@ class NovitaClient:
                    callback: callable = None,
                    enterprise_plan=None
                    ):
-        face_images = [input_image_to_pil(img) for img in face_images]
-        ref_images = ref_images and [input_image_to_pil(img) for img in ref_images]
+        #face_images = [input_image_to_pil(img) for img in face_images]
+        #ref_images = ref_images and [input_image_to_pil(img) for img in ref_images]
 
         face_image_assets_ids = self.upload_assets(face_images)
         if ref_images is not None and len(ref_images) > 0:
@@ -1074,6 +1080,77 @@ class NovitaClient:
                 final_res.download_images()
 
         return final_res
+    
+    def async_instant_style(self,
+                   ref_image: InputImage,
+                   model_name: str,
+                   prompt: str,
+                   width: int,
+                   height: int,
+                   image_num: int,
+                   steps: int,
+                   guidance_scale: float,
+                   sampler_name: str,
+                   source_image: InputImage = None,
+                   style_mode: int = None,
+                   source_image_conditioning_scale: float = 0.5,
+                   negative_prompt: str = None,
+                   seed: str = -1,
+                   clip_skip: int = None,
+                   loras: List[InstantStyleLoRA] = None,
+                   embeddings: List[InstantStyleEmbedding] = None,
+                   enterprise_plan: bool = None,
+                   response_image_type: str = None,
+                   ):
+        ref_image_assets_ids= self.upload_assets([ref_image])
+        if source_image is not None:
+            source_image_assets_ids = self.upload_assets([source_image])
+        else:
+            source_image_assets_ids = ref_image_assets_ids[:1]
+        req = InstantStyleRequest(
+            ref_image_assets_id=ref_image_assets_ids[0],
+            source_image_assets_id=source_image_assets_ids[0],
+            model_name=model_name,
+            prompt=prompt,
+            width=width,
+            height=height,
+            image_num=image_num,
+            steps=steps,
+            guidance_scale=guidance_scale,
+            sampler_name=sampler_name,
+            source_image_conditioning_scale=source_image_conditioning_scale,
+            style_mode=style_mode,
+            negative_prompt=negative_prompt,
+            seed=seed,
+            clip_skip=clip_skip,
+            loras=loras,
+            embeddings=embeddings
+        )
+        if response_image_type is not None:
+            req.set_image_type(response_image_type)
+        if enterprise_plan is not None:
+            req.set_enterprise_plan(enterprise_plan)
+        
+        return InstantStyleResponse.from_dict(self._post('/v3/async/instant-style', req.to_dict()))
+    
+    def instant_style(self, ref_image: InputImage, model_name: str,
+                      prompt: str, width: int, height: int,
+                      image_num: int, steps: int, guidance_scale: float,
+                      sampler_name: str, source_images: InputImage = None,
+                      style_mode: int = None, source_image_conditioning_scale: float = 0.5,
+                      negative_prompt: str = None, seed: str = -1, clip_skip: int = None,
+                      loras: List[InstantStyleLoRA] = None, embeddings: List[InstantStyleEmbedding] = None,
+                      enterprise_plan: bool = None, response_image_type: str = None,
+                    ):
+        res = self.async_instant_style(ref_image, model_name, prompt, width, height, image_num, steps, guidance_scale, sampler_name, source_images, style_mode, source_image_conditioning_scale, negative_prompt, seed, clip_skip, loras, embeddings, enterprise_plan, response_image_type)
+        final_res = self.wait_for_task_v3(res.task_id)
+        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
+            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
+        else:
+            final_res.download_images()
+        return final_res
+
+
 
     def raw_img2img_v3(self, req: Img2ImgV3Request, extra: CommonV3Extra = None) -> Img2ImgV3Response:
         _req = CommonV3Request(request=req, extra=extra)
@@ -1167,7 +1244,7 @@ class NovitaClient:
         res = self.raw_txt2img_v3(req, extra)
         final_res = self.wait_for_task_v3(res.task_id, callback=callback)
         if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {res.task_id} failed with status {final_res}")
+            logger.error(f"Task {res.task_id} failed with status {final_res.task.status}")
             raise NovitaResponseError(f"Task {res.task_id} failed with status {final_res.task.status}")
         else:
             if download_images:
