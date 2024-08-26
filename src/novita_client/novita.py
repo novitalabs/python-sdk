@@ -1314,7 +1314,7 @@ class NovitaClient:
         """
 
         if (self._model_list_cache is None or len(self._model_list_cache) == 0) or refresh:
-            res = self._get('/v2/models')
+            res = self._get('/v2/models', params={'type': 'checkpoint'})
 
             # TODO: fix this
             res_controlnet = self._get(
