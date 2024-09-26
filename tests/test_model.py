@@ -8,9 +8,9 @@ def test_model_api():
     assert all([m.is_nsfw is True for m in models.filter_by_nsfw(True)])
     assert all([m.is_nsfw is False for m in models.filter_by_nsfw(False)])
 
-    # assert len(models. \
-    #     filter_by_type(ModelType.LORA). \
-    #     filter_by_nsfw(False)) > 0
+    assert len(models. \
+        filter_by_type(ModelType.LORA). \
+        filter_by_nsfw(False)) > 0
 
     assert len(models.filter_by_type(ModelType.CHECKPOINT)) > 0
     assert len(models.filter_by_type(ModelType.LORA)) > 0
