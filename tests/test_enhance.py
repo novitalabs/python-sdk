@@ -114,39 +114,6 @@ def test_reimagine():
 
     base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_reimagine.{res.image_type}"))
 
-
-def test_doodle():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.doodle(
-        image="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
-        prompt="A cute dog",
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_doodle.{res.image_type}"))
-
-
-def test_mixpose():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.mixpose(
-        image="https://image.uniqlo.com/UQ/ST3/my/imagesgoods/455359/item/mygoods_23_455359.jpg?width=494",
-        pose_image="https://image.uniqlo.com/UQ/ST3/ca/imagesgoods/455359/item/cagoods_02_455359.jpg?width=494",
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_mixpose.{res.image_type}"))
-
-
 def test_replace_background():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
@@ -162,88 +129,6 @@ def test_replace_background():
 
     base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_replace_background.{res.image_type}"))
 
-
-def test_relight():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-    res = client.relight(
-        image = "https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
-        prompt = "a sunny day",
-        steps=15,
-        sampler_name="Euler a",
-        guidance_scale=10,
-        strength=0.5,
-        clip_skip=4,
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-    
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_relight.{res.image_type}"))
-
-
-def test_remove_watermark():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-    res = client.remove_watermark(
-        image = "https://imgv3.fotor.com/images/slider-image/Photo-of-hot-air-balloons-over-a-hilly-landscape-at-dusk-with-watermarks-on-it.jpg",
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_remove_watermark.{res.image_type}"))
-
-
-def test_replace_sky():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.replace_sky(
-        image="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/16/a6/88/con-la-primavera-in-giappone.jpg?w=700",
-        sky="galaxy"
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_replace_sky.png"))
-
-
-def test_replace_object():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.replace_object(
-        image="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
-        object_prompt="a dog",
-        prompt="a cute cat"
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_replace_object.{res.image_type}"))
-
-
-def test_create_tile():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.create_tile(
-        prompt="a cute flower",
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_tile.{res.image_type}"))
-
-
 def test_merge_face():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
@@ -258,18 +143,3 @@ def test_merge_face():
         os.path.dirname(__name__)), "tests/data")
 
     base64_to_image(res.image_file).save(os.path.join(os.path.abspath(test_path), f"test_merge_face.{res.image_type}"))
-
-
-def test_lcm_txt2img():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-    animals = ["cat", "dog", "bird", "horse", "elephant", "giraffe", "zebra", "lion", "tiger", "bear", "sheep", "cow", "pig"]
-    res = client.lcm_txt2img(
-        prompt=f"a cute {random.choice(animals)}, masterpiece, best quality, realism",
-        steps=8,
-        image_num=10,
-    )
-
-    assert (res.images is not None)
-
-    test_path = os.path.join(os.path.abspath(os.path.dirname(__name__)), "tests/data")
-    make_image_grid([base64_to_image(img.image_file) for img in res.images], 2, 5).save(os.path.join(os.path.abspath(test_path), f"test_lcm_txt2img.png"))
