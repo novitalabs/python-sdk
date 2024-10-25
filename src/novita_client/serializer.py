@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from dataclass_wizard import JSONWizard, DumpMeta
+from dataclass_wizard import DumpMeta, JSONWizard
 
 
 class JSONe(JSONWizard):

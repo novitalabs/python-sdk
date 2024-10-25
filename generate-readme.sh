@@ -1,18 +1,18 @@
 #!/bin/bash
 
 cat > README.md <<'EOF'
-# novita Python SDK
+# Novita AI Python SDK
 
-this SDK is based on the official [API documentation](https://docs.novita.ai/)
+This SDK is based on the official [API documentation](https://docs.novita.ai/).
 
-**join our discord server for help**
+**Join our discord server for help:**
 
 [![](https://dcbadge.vercel.app/api/server/Mqx7nWYzDF)](https://discord.com/invite/Mqx7nWYzDF)
 
 ## Installation
 
 ```bash
-pip install novita
+pip install novita-client
 ```
 
 ## Examples
@@ -30,6 +30,7 @@ echo "## Code Examples" >> README.md
 
 for FILE in $(ls examples/ | grep py | sort -V); do
     NAME=$(echo "$FILE" | sed 's/.py//')
+    echo "" >> README.md
     echo "### $NAME" >> README.md
     echo "\`\`\`python" >> README.md
     cat examples/$FILE >> README.md

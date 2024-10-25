@@ -2,20 +2,17 @@
 # -*- coding: UTF-8 -*-
 
 import logging
-
-from time import sleep
-
-from .version import __version__
-
-from .exceptions import *
-from .proto import *
-
-import requests
-from . import settings
-from .utils import input_image_to_base64, input_image_to_pil
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
+from time import sleep
 
+import requests
+
+from . import settings
+from .exceptions import *
+from .proto import *
+from .utils import input_image_to_base64, input_image_to_pil
+from .version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -129,54 +126,6 @@ class NovitaClient:
         raise NovitaTimeoutError(
             f"Task {task_id} failed to complete in {wait_for} seconds")
 
-    def raw_adetailer(self, req: ADETailerRequest, extra: CommonV3Extra = None) -> ADETailerResponse:
-        _req = CommonV3Request(request=req, extra=extra)
-
-        return ADETailerResponse.from_dict(self._post('/v3/async/adetailer', _req.to_dict()))
-
-    def adetailer(self, model_name: str, input_images: List[InputImage], prompt: str, sampler_name=None, guidance_scale=None, steps=None, strength=None, loras: List[ADETailerLoRA] = None, embeddings: List[ADETailerEmbedding] = None, negative_prompt=None, sd_vae=None, seed=None, clip_skip=None,  download_images=True, callback: callable = None,**kwargs) -> V3TaskResponse:
-        req = ADETailerRequest(
-            model_name=model_name,
-            prompt=prompt,
-        )
-        if steps is not None:
-            req.steps = steps
-        if strength is not None:
-            req.strength = strength
-        if negative_prompt is not None:
-            req.negative_prompt = negative_prompt
-        if sd_vae is not None:
-            req.sd_vae = sd_vae
-        if seed is not None:
-            req.seed = seed
-        if clip_skip is not None:
-            req.clip_skip = clip_skip
-        if loras is not None:
-            req.loras = loras
-        if embeddings is not None:
-            req.embeddings = embeddings
-        if guidance_scale is not None:
-            req.guidance_scale = guidance_scale
-        if sampler_name is not None:
-            req.sampler_name = sampler_name
-
-        mode = "assets"  # or assets
-        for input_image in input_images:
-            if isinstance(input_image, str) and input_image.startswith("https://faas-output-image"):
-                mode = "s3_url"
-                break
-
-        if mode == "assets":
-            req.image_assets_ids = self.upload_assets([input_image_to_base64(image) for image in input_images])
-        else:
-            req.image_urls = input_images
-        
-        extra = CommonV3Extra(**kwargs)
-
-        res = self.raw_adetailer(req, extra)
-
-        return self.wait_for_task_v3(res.task_id, callback=callback)
-
     def cleanup(self, image: InputImage, mask: InputImage, response_image_type=None, enterprise_plan: bool=None) -> CleanupResponse:
         image_b64 = input_image_to_base64(image)
         mask_b64 = input_image_to_base64(mask)
@@ -259,56 +208,6 @@ class NovitaClient:
 
         return ReimagineResponse.from_dict(self._post('/v3/reimagine', request.to_dict()))
 
-    def doodle(self, image: InputImage, prompt: str, similarity: float = None, response_image_type=None, enterprise_plan: bool=None) -> DoodleResponse:
-        image_b64 = input_image_to_base64(image)
-        request = DoodleRequest(image_file=image_b64, prompt=prompt)
-        if similarity is not None:
-            request.similarity = similarity
-
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-
-        return DoodleResponse.from_dict(self._post('/v3/doodle', request.to_dict()))
-    
-    def relight(self, input_image: str, model_name: str,lighting_preference:str, prompt: str, steps:int, sampler_name:str,guidance_scale: float, strength:float,\
-                seed:int=-1,background_image_file:str=None,negative_prompt:str=None,clip_skip:int=None,response_image_type:str=None, enterprise_plan: bool=None) -> RelightResponse:
-        image_b64 = input_image_to_base64(input_image)
-        request = RelightRequest(image_file=image_b64, model_name=model_name,prompt=prompt,lighting_preference=lighting_preference,steps=steps,sampler_name = sampler_name,seed =seed, background_image_file\
-                                 = background_image_file,negative_prompt = negative_prompt,strength=strength,guidance_scale=guidance_scale)
-        if (clip_skip is not None):
-            request.clip_skip = clip_skip
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-
-        return RelightResponse.from_dict(self._post('/v3/relight', request.to_dict()))
-
-    def mixpose(self, image: InputImage, pose_image: InputImage, response_image_type=None, enterprise_plan: bool=None) -> MixPoseResponse:
-        image_b64 = input_image_to_base64(image)
-        pose_image_b64 = input_image_to_base64(pose_image)
-        request = MixPoseRequest(image_file=image_b64, pose_image_file=pose_image_b64)
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-
-        return MixPoseResponse.from_dict(self._post('/v3/mix-pose', request.to_dict()))
-
     def replace_background(self, image: InputImage, prompt: str, response_image_type=None, enterprise_plan: bool=None) -> ReplaceBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = ReplaceBackgroundRequest(image_file=image_b64, prompt=prompt)
@@ -321,54 +220,6 @@ class NovitaClient:
         else:
             request.set_enterprise_plan(False)
         return ReplaceBackgroundResponse.from_dict(self._post('/v3/replace-background', request.to_dict()))
-
-    def replace_sky(self, image: InputImage, sky: str, response_image_type=None, enterprise_plan: bool=None) -> ReplaceSkyResponse:
-        image_b64 = input_image_to_base64(image)
-        request = ReplaceSkyRequest(image_file=image_b64, sky=sky)
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return ReplaceSkyResponse.from_dict(self._post('/v3/replace-sky', request.to_dict()))
-    
-    def remove_watermark(self, image: InputImage, response_image_type=None, enterprise_plan: bool=None) -> RemoveWatermarkResponse:
-        image_b64 = input_image_to_base64(image)
-        request = RemoveWatermarkRequest(image_file=image_b64)
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return RemoveWatermarkResponse.from_dict(self._post('/v3/remove-watermark', request.to_dict()))
-
-    def replace_object(self, image: InputImage, object_prompt: str, prompt: str, negative_prompt=None, response_image_type=None, enterprise_plan: bool=None) -> ReplaceObjectResponse:
-        res: V3AsyncSubmitResponse = self.async_replace_object(image, object_prompt, prompt, negative_prompt, response_image_type, enterprise_plan)
-        final_res = self.wait_for_task_v3(res.task_id)
-        final_res.download_images()
-        return ReplaceObjectResponse(
-            image_file=final_res.images_encoded[0],
-            image_type=final_res.images[0].image_type,
-        )
-
-    def async_replace_object(self, image: InputImage, object_prompt: str, prompt: str, negative_prompt=None, response_image_type=None, enterprise_plan: bool=None) -> ReplaceObjectResponse:
-        image_b64 = input_image_to_base64(image)
-        request = ReplaceObjectRequest(image_file=image_b64, object_prompt=object_prompt, prompt=prompt, negative_prompt=negative_prompt)
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return V3AsyncSubmitResponse.from_dict(self._post('/v3/async/replace-object', request.to_dict()))
 
     def async_txt2video(self,model_name:str, height:int,width:int,steps:int,prompts:List[Txt2VideoPrompt],guidance_scale:float,seed:int=None,negative_prompt: Optional[str] = None,loras:List[Txt2VideoLoRA]=None,\
                         embeddings:List[Txt2VideoEmbedding]=None,clip_skip:int=None,closed_loop:bool=None,response_video_type:str=None,enterprise_plan: bool=None) -> Txt2VideoResponse:
@@ -429,38 +280,6 @@ class NovitaClient:
         res: Img2VideoMotionResponse = self.async_img2video_motion(image_assets_id,motion_assets_id,seed,set_video_type,enterprise_plan)
         final_res = self.wait_for_task_v3(res.task_id)
         return final_res
-    
-    def async_animated_anyone(self, image_assets_id: str, pose_video_assets_id: str, height:int, width:int, steps:int, seed:int, set_video_type:str=None, enterprise_plan: bool=None) -> AnimatedAnyoneResponse:
-        request = AnimatedAnyoneRequest(image_assets_id=image_assets_id, pose_video_assets_id=pose_video_assets_id, height=height, width=width, steps=steps, seed=seed)
-        if set_video_type is not None:
-            request.set_video_type(set_video_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return AnimatedAnyoneResponse.from_dict(self._post('/v3/async/animated-anyone', request.to_dict()))
-    
-    def animated_anyone(self, image_assets_id: str, pose_video_assets_id: str, height:int, width:int, steps:int, seed:int, set_video_type:str=None, enterprise_plan=None) -> AnimatedAnyoneResponse:
-        res: AnimatedAnyoneResponse = self.async_animated_anyone(image_assets_id,pose_video_assets_id,height,width,steps,seed,set_video_type, enterprise_plan)
-        final_res = self.wait_for_task_v3(res.task_id)
-        return final_res
-
-
-    def lcm_img2img(self, model_name: str, image: InputImage, prompt: str, image_num: int, negative_prompt: str = None, steps: int = None, guidance_scale: float = None, clip_skip: int = None, sd_vae: str = None, loras: List[LCMLoRA] = None, embeddings: List[LCMEmbedding] = None) -> LCMImg2ImgResponse:
-        res = self._post('/v3/lcm-img2img', LCMImg2ImgRequest(
-            input_image=input_image_to_base64(image),
-            prompt=prompt,
-            model_name=model_name,
-            negative_prompt=negative_prompt,
-            steps=steps,
-            guidance_scale=guidance_scale,
-            image_num=image_num,
-            clip_skip=clip_skip,
-            sd_vae=sd_vae,
-            loras=loras,
-            embeddings=embeddings,
-        ).to_dict())
-        return LCMImg2ImgResponse.from_dict(res)
 
     def restore_face(self, image: InputImage, fidelity=None, response_image_type=None, enterprise_plan=None) -> RestoreFaceResponse:
         image_b64 = input_image_to_base64(image)
@@ -476,25 +295,6 @@ class NovitaClient:
         else:
             request.set_enterprise_plan(False)
         return RestoreFaceResponse.from_dict(self._post('/v3/restore-face', request.to_dict()))
-
-    def create_tile(self, prompt: str, negative_prompt=None, width=None, height=None, response_image_type=None, enterprise_plan=None) -> CreateTileResponse:
-        request = CreateTileRequest(prompt=prompt)
-        if negative_prompt is not None:
-            request.negative_prompt = negative_prompt
-        if width is not None:
-            request.width = width
-        if height is not None:
-            request.height = height
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return CreateTileResponse.from_dict(self._post('/v3/create-tile', request.to_dict()))
-    
 
     def raw_inpainting(self, req: InpaintingRequest, extra: CommonV3Extra = None) -> InpaintingResponse:
         _req = CommonV3Request(request=req, extra=extra)
@@ -537,19 +337,6 @@ class NovitaClient:
             logging.error(f"Failed to inpaint image: {final_res.task.status}")
             raise NovitaResponseError(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
         return final_res
-    
-    def img2mask(self, image: InputImage,response_image_type=None,enterprise_plan=None) -> Img2MaskResponse:
-        input_image = input_image_to_base64(image)
-        resquest = Img2MaskRequest(image_file=input_image)
-        if response_image_type is None:
-            resquest.set_image_type(self._default_response_image_type)
-        else:
-            resquest.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            resquest.set_enterprise_plan(enterprise_plan)
-        else:
-            resquest.set_enterprise_plan(False)
-        return Img2MaskResponse.from_dict(self._post('/v3/img2mask', resquest.to_dict()))
 
     def img2prompt(self, image: InputImage) -> Img2PromptResponse:
         input_image = input_image_to_base64(image)
@@ -569,20 +356,6 @@ class NovitaClient:
         else:
             request.set_enterprise_plan(False)
         return MergeFaceResponse.from_dict(self._post('/v3/merge-face', request.to_dict()))
-
-    def lcm_txt2img(self, prompt: str, width=None, height=None, steps=None, guidance_scale=None, image_num=None) -> LCMTxt2ImgResponse:
-        req = LCMTxt2ImgRequest(prompt=prompt)
-        if width is not None:
-            req.width = width
-        if height is not None:
-            req.height = height
-        if steps is not None:
-            req.steps = steps
-        if guidance_scale is not None:
-            req.guidance_scale = guidance_scale
-        if image_num is not None:
-            req.image_num = image_num
-        return LCMTxt2ImgResponse.from_dict(self._post('/v3/lcm-txt2img', req.to_dict()))
 
     def upload_training_assets(self, images: List[InputImage], batch_size=10) -> List[str]:
         def _upload_assets(image: InputImage) -> str:
@@ -762,63 +535,6 @@ class NovitaClient:
                 raise NovitaResponseError(f"Failed to upload image: {e}")
             return ret
 
-    def async_make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None,\
-                         clip_skip: int = None, seed: int = None, strength: float = None, sampler_name: str = None, response_image_type: str = None, crop_face: bool = None, enterprise_plan=None) -> MakePhotoResponse:
-        assets = self.upload_assets(images)
-        req = MakePhotoRequest(
-            model_name=model_name,
-            image_assets_ids=assets,
-            prompt=prompt,
-        )
-        if loras is not None:
-            req.loras = loras
-        if height is not None:
-            req.height = height
-        if width is not None:
-            req.width = width
-        if negative_prompt is not None:
-            req.negative_prompt = negative_prompt
-        if steps is not None:
-            req.steps = steps
-        if guidance_scale is not None:
-            req.guidance_scale = guidance_scale
-        if image_num is not None:
-            req.image_num = image_num
-        if clip_skip is not None:
-            req.clip_skip = clip_skip
-        if seed is not None:
-            req.seed = seed
-        if strength is not None:
-            req.strength = strength
-        if sampler_name is not None:
-            req.sampler_name = sampler_name
-        if crop_face is not None:
-            req.crop_face = crop_face
-
-        if response_image_type is None:
-            req.set_image_type(self._default_response_image_type)
-        else:
-            req.set_image_type(response_image_type)
-        
-        if enterprise_plan is not None:
-            req.set_enterprise_plan(enterprise_plan)
-        else:
-            req.set_enterprise_plan(False)
-
-        return MakePhotoResponse.from_dict(self._post('/v3/async/make-photo', req.to_dict()))
-
-    def make_photo(self, images: List[InputImage], model_name: str, prompt: str, loras: List[MakePhotoLoRA] = None, height: int = None, width: int = None,  negative_prompt: str = None, steps: int = None, guidance_scale: float = None, image_num: int = None, clip_skip: int = None, seed: int = None,\
-                strength: float = None, sampler_name: str = None, response_image_type: str = None, download_images: bool = True, callback: callable = None, enterprise_plan: bool = None) -> V3TaskResponse:
-        res: MakePhotoResponse = self.async_make_photo(images, model_name, prompt, loras, height, width, negative_prompt, steps,
-                                                       guidance_scale, image_num, clip_skip, seed, strength, sampler_name, response_image_type,enterprise_plan)
-        final_res = self.wait_for_task_v3(res.task_id, callback=callback)
-        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
-        else:
-            if download_images:
-                final_res.download_images()
-        return final_res
-
     def instant_id(self,
                    face_images: List[InputImage],
                    ref_images: List[InputImage] = None,
@@ -887,77 +603,6 @@ class NovitaClient:
                 final_res.download_images()
 
         return final_res
-    
-    def async_instant_style(self,
-                   ref_image: InputImage,
-                   model_name: str,
-                   prompt: str,
-                   width: int,
-                   height: int,
-                   image_num: int,
-                   steps: int,
-                   guidance_scale: float,
-                   sampler_name: str,
-                   source_image: InputImage = None,
-                   style_mode: int = None,
-                   source_image_conditioning_scale: float = 0.5,
-                   negative_prompt: str = None,
-                   seed: str = -1,
-                   clip_skip: int = None,
-                   loras: List[InstantStyleLoRA] = None,
-                   embeddings: List[InstantStyleEmbedding] = None,
-                   enterprise_plan: bool = None,
-                   response_image_type: str = None,
-                   ):
-        ref_image_assets_ids= self.upload_assets([ref_image])
-        if source_image is not None:
-            source_image_assets_ids = self.upload_assets([source_image])
-        else:
-            source_image_assets_ids = ref_image_assets_ids[:1]
-        req = InstantStyleRequest(
-            ref_image_assets_id=ref_image_assets_ids[0],
-            source_image_assets_id=source_image_assets_ids[0],
-            model_name=model_name,
-            prompt=prompt,
-            width=width,
-            height=height,
-            image_num=image_num,
-            steps=steps,
-            guidance_scale=guidance_scale,
-            sampler_name=sampler_name,
-            source_image_conditioning_scale=source_image_conditioning_scale,
-            style_mode=style_mode,
-            negative_prompt=negative_prompt,
-            seed=seed,
-            clip_skip=clip_skip,
-            loras=loras,
-            embeddings=embeddings
-        )
-        if response_image_type is not None:
-            req.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            req.set_enterprise_plan(enterprise_plan)
-        
-        return InstantStyleResponse.from_dict(self._post('/v3/async/instant-style', req.to_dict()))
-    
-    def instant_style(self, ref_image: InputImage, model_name: str,
-                      prompt: str, width: int, height: int,
-                      image_num: int, steps: int, guidance_scale: float,
-                      sampler_name: str, source_images: InputImage = None,
-                      style_mode: int = None, source_image_conditioning_scale: float = 0.5,
-                      negative_prompt: str = None, seed: str = -1, clip_skip: int = None,
-                      loras: List[InstantStyleLoRA] = None, embeddings: List[InstantStyleEmbedding] = None,
-                      enterprise_plan: bool = None, response_image_type: str = None,
-                    ):
-        res = self.async_instant_style(ref_image, model_name, prompt, width, height, image_num, steps, guidance_scale, sampler_name, source_images, style_mode, source_image_conditioning_scale, negative_prompt, seed, clip_skip, loras, embeddings, enterprise_plan, response_image_type)
-        final_res = self.wait_for_task_v3(res.task_id)
-        if final_res.task.status != V3TaskResponseStatus.TASK_STATUS_SUCCEED:
-            logger.error(f"Task {final_res.task.task_id} failed with status {final_res.task.status}")
-        else:
-            final_res.download_images()
-        return final_res
-
-
 
     def raw_img2img_v3(self, req: Img2ImgV3Request, extra: CommonV3Extra = None) -> Img2ImgV3Response:
         _req = CommonV3Request(request=req, extra=extra)

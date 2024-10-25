@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from multiprocessing.pool import ThreadPool
-
 import base64
 import logging
+from io import BytesIO
+from multiprocessing.pool import ThreadPool
 
 import requests
-from io import BytesIO
+from PIL import Image, ImageOps
 
 from . import settings
 from .proto import *
-from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 

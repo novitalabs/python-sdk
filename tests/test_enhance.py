@@ -83,7 +83,7 @@ def test_remove_text():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
     res = client.remove_text(
-        image="https://images.uiiiuiii.com/wp-content/uploads/2023/07/i-banner-20230714-1.jpg"
+        image="https://cf-images.novitai.com/sdk-cases/remove_text_example_1.jpg/public"
     )
 
     assert (res.image_file is not None)
@@ -248,8 +248,8 @@ def test_merge_face():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
     res = client.merge_face(
-        image="https://www.wgm8.com/wp-content/uploads/2016/06/images_wgm_online-only_Gaming_2016_30-06-16-1.jpg",
-        face_image="https://p7.itc.cn/images01/20220220/285669b5682540a8a307a87d8745f530.jpeg",
+        image="https://cf-images.novitai.com/sdk-cases/merge_face_example_1_1.png/public",
+        face_image="https://cf-images.novitai.com/sdk-cases/merge_face_example_1_2.png/public",
     )
 
     assert (res.image_file is not None)

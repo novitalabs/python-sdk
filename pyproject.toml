@@ -1,11 +1,10 @@
 [project]
 name = "novita_client"
-version = "0.5.8"
-description = "novita SDK for Python"
+version = "0.6.1"
+description = "Novita AI Python SDK"
 authors = [
-    { name = "novita", email = "novitalabs@gmail.com" }
+    { name = "Novita AI", email = "novitalabs@gmail.com" }
 ]
-
 
 dependencies = [
     "dataclass_wizard>=0.22.2",
@@ -47,3 +46,8 @@ dev-dependencies = [
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.pytest.ini_options]
+markers = [
+    "dependency: mark a test as dependency for other tests",
+]
