@@ -1,15 +1,15 @@
-# novita Python SDK
+# Novita AI Python SDK
 
-this SDK is based on the official [API documentation](https://docs.novita.ai/)
+This SDK is based on the official [API documentation](https://docs.novita.ai/).
 
-**join our discord server for help**
+**Join our discord server for help:**
 
 [![](https://dcbadge.vercel.app/api/server/Mqx7nWYzDF)](https://discord.com/invite/Mqx7nWYzDF)
 
 ## Installation
 
 ```bash
-pip install novita-client
+pip install novita
 ```
 
 ## Examples
@@ -17,29 +17,24 @@ pip install novita-client
 - [fine tune example](https://colab.research.google.com/drive/1j_ii9TN67nuauvc3PiauwZnC2lT62tGF?usp=sharing)
 - [cleanup](./examples/cleanup.py)
 - [controlnet](./examples/controlnet.py)
-- [create-tile](./examples/create-tile.py)
-- [doodle](./examples/doodle.py)
 - [img2img](./examples/img2img.py)
 - [img2video](./examples/img2video.py)
+- [inpainting](./examples/inpainting.py)
 - [instantid](./examples/instantid.py)
-- [latent-consistency-txt2img](./examples/latent-consistency-txt2img.py)
-- [lcm-img2img](./examples/lcm-img2img.py)
-- [lcm-vs-txt2img](./examples/lcm-vs-txt2img.py)
-- [make-photo](./examples/make-photo.py)
 - [merge-face](./examples/merge-face.py)
-- [mixpose](./examples/mixpose.py)
 - [model-search](./examples/model-search.py)
 - [outpainting](./examples/outpainting.py)
 - [reimagine](./examples/reimagine.py)
 - [remove-background](./examples/remove-background.py)
 - [remove-text](./examples/remove-text.py)
 - [replace-background](./examples/replace-background.py)
-- [replace-object](./examples/replace-object.py)
-- [replace-sky](./examples/replace-sky.py)
+- [restore-face](./examples/restore-face.py)
 - [txt2img-with-hiresfix](./examples/txt2img-with-hiresfix.py)
 - [txt2img-with-lora](./examples/txt2img-with-lora.py)
 - [txt2img-with-refiner](./examples/txt2img-with-refiner.py)
+- [txt2video](./examples/txt2video.py)
 ## Code Examples
+
 ### cleanup
 ```python
 import os
@@ -55,6 +50,7 @@ res = client.cleanup(
 
 base64_to_image(res.image_file).save("./cleanup.png")
 ```
+
 ### controlnet
 ```python
 #!/usr/bin/env python
@@ -70,19 +66,16 @@ client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', N
 res = client.img2img_v3(
     input_image="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
     model_name="dreamshaper_8_93211.safetensors",
-    prompt="a cute dog, masterpiece, best quality",
+    prompt="a cute dog",
     sampler_name=Samplers.DPMPP_M_KARRAS,
     width=512,
     height=512,
     steps=30,
-    strength=1.0,
     controlnet_units=[
         Img2ImgV3ControlNetUnit(
-            # image_base64="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
-            image_base64="examples/fixtures/qrcode.png",
-            model_name="control_v1p_sd15_brightness",
-            preprocessor=None,
-            strength=1
+            image_base64="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
+            model_name="control_v11f1p_sd15_depth",
+            strength=1.0
         )
     ],
     embeddings=[Img2ImgV3Embedding(model_name=_) for _ in [
@@ -94,36 +87,7 @@ res = client.img2img_v3(
 
 base64_to_image(res.images_encoded[0]).save("./img2img-controlnet.png")
 ```
-### create-tile
-```python
-import os
 
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.create_tile(
-    prompt="a cute flower",
-)
-
-
-base64_to_image(res.image_file).save("./create-tile.png")
-```
-### doodle
-```python
-import os
-
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.doodle(
-     image="https://img.freepik.com/premium-photo/close-up-dogs-face-with-big-smile-generative-ai_900101-62851.jpg",
-     prompt="A cute dog",
-)
-
-base64_to_image(res.image_file).save("./doodle.png")
-```
 ### img2img
 ```python
 import pdb
@@ -131,10 +95,8 @@ import os
 
 from novita_client import NovitaClient, Img2ImgV3ControlNetUnit, ControlNetPreprocessor, Img2ImgV3Embedding
 from novita_client.utils import base64_to_image, input_image_to_pil
-from concurrent.futures import ThreadPoolExecutor
 
 client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
 res = client.img2img_v3(
     model_name="MeinaHentai_V5.safetensors",
     steps=30,
@@ -152,7 +114,6 @@ res = client.img2img_v3(
         "easynegative_8955.safetensors"]],
     seed=-1,
     sampler_name="DPM++ 2M Karras",
-    sd_vae="klF8Anime2VAE_klF8Anime2VAE_207314.safetensors",
     clip_skip=2,
     # controlnet_units=[Img2ImgV3ControlNetUnit(
     #     model_name="control_v11f1p_sd15_depth",
@@ -164,6 +125,7 @@ res = client.img2img_v3(
 
 base64_to_image(res.images_encoded[0]).save("./img2img.png")
 ```
+
 ### img2video
 ```python
 import os
@@ -184,6 +146,37 @@ res = client.img2video(
 with open("test.mp4", "wb") as f:
     f.write(res.video_bytes[0])
 ```
+
+### inpainting
+```python
+import os
+import base64
+from novita_client import NovitaClient
+from novita_client.utils import base64_to_image
+
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+res = client.inpainting(
+    model_name = "realisticVisionV40_v40VAE-inpainting_81543.safetensors",
+    image="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
+    mask="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
+    seed=1,
+    guidance_scale=15,
+    steps = 20,
+    image_num = 4,
+    prompt = "black rabbit",
+    negative_prompt = "white rabbit",
+    sampler_name = "Euler a",
+    inpainting_full_res = 1,
+    inpainting_full_res_padding = 32,
+    inpainting_mask_invert = 0,
+    initial_noise_multiplier = 1,
+    mask_blur = 1,
+    clip_skip = 1,
+    strength = 0.85,
+)
+with open("result/result_image/inpaintingsdk.jpeg", "wb") as image_file:
+    image_file.write(base64.b64decode(res.images_encoded[0]))```
+
 ### instantid
 ```python
 
@@ -222,6 +215,7 @@ if __name__ == '__main__':
 			),
 		],
 		response_image_type='jpeg',
+		enterprise_plan=False,
 	)
 
 	print('res:', res)
@@ -230,201 +224,7 @@ if __name__ == '__main__':
 		with open(f"instantid.png", "wb") as f:
 			f.write(base64.b64decode(res.images_encoded[0]))
 ```
-### latent-consistency-txt2img
-```python
-from novita_client import *
-from novita_client.utils import save_image, read_image_to_base64, base64_to_image
-import os
-from PIL import Image
-import random
-import sys
 
-
-def test_lcm_txt2img():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    x, y = 0, 0
-    background = Image.new('RGB', (512 * 10, 512 * 10), (255, 255, 255))
-    for i in range(20):
-        animals = ["cat", "dog", "bird", "horse", "elephant", "giraffe", "zebra", "lion", "tiger", "bear", "sheep", "cow", "pig"]
-        res = client.lcm_txt2img(
-            prompt=f"a cute {random.choice(animals)}, masterpiece, best quality, realism",
-            steps=8,
-            image_num=5,
-        )
-        images = [base64_to_image(img.image_file) for img in res.images]
-        for image in images:
-            background.paste(image, (x, y))
-            background.save("lcm.jpeg")
-            x += 512
-            if x >= 512 * 10:
-                x = 0
-                y += 512
-
-
-def test_normal_txt2img():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    x, y = 0, 0
-    background = Image.new('RGB', (512 * 10, 512 * 10), (255, 255, 255))
-    for i in range(20):
-        animals = ["cat", "dog", "bird", "horse", "elephant", "giraffe", "zebra", "lion", "tiger", "bear", "sheep", "cow", "pig"]
-        res = client.sync_txt2img(
-            Txt2ImgRequest(
-                prompt=f"a cute {random.choice(animals)}, masterpiece, best quality, realism",
-                steps=20,
-                height=512,
-                width=512,
-                batch_size=5,
-            )
-        )
-        images = [Image.open(BytesIO(b) for b in res.data.imgs_bytes)]
-        for image in images:
-            background.paste(image, (x, y))
-            background.save("normal.jpeg")
-            x += 512 
-            if x >= 512 * 10:  
-                x = 0
-                y += 512
-
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "normal":
-            test_normal_txt2img()
-        else:
-            test_lcm_txt2img()
-```
-### lcm-img2img
-```python
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
-import os
-from novita_client import NovitaClient
-
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-res = client.lcm_img2img(
-    model_name="dreamshaper_8_93211.safetensors",
-    prompt="1 house",
-    image="https://replicate.delivery/pbxt/JvLi9smWKKDfQpylBYosqQRfPKZPntuAziesp0VuPjidq61n/rocket.png",
-    steps=4,
-    guidance_scale=1,
-    clip_skip=1,
-    image_num=1,
-)
-
-print(res.to_json())
-res.images[0]
-```
-### lcm-vs-txt2img
-```python
-from novita_client import *
-from novita_client.utils import save_image, read_image_to_base64, base64_to_image
-import os
-from PIL import Image
-import random
-import sys
-
-
-def test_lcm_txt2img():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    x, y = 0, 0
-    background = Image.new('RGB', (512 * 10, 512 * 10), (255, 255, 255))
-    animals = ["cat", "dog", "bird", "horse", "elephant", "giraffe", "zebra", "lion", "tiger", "bear", "sheep", "cow", "pig"]
-    for i in range(20):
-        object_prompt = animals[i % len(animals)]
-        res = client.lcm_txt2img(
-            prompt=f"a cute {object_prompt}, masterpiece, best quality, realism, high saturation",
-            steps=8,
-            image_num=5,
-        )
-        images = [base64_to_image(img.image_file) for img in res.images]
-        for image in images:
-            background.paste(image, (x, y))
-            background.save("lcm.jpeg")
-            x += 512
-            if x >= 512 * 10:
-                x = 0
-                y += 512
-
-
-def test_normal_txt2img():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    x, y = 0, 0
-    background = Image.new('RGB', (512 * 10, 512 * 10), (255, 255, 255))
-    animals = ["cat", "dog", "bird", "horse", "elephant", "giraffe", "zebra", "lion", "tiger", "bear", "sheep", "cow", "pig"]
-    for i in range(20):
-        object_prompt = animals[i % len(animals)]
-        res = client.sync_txt2img(
-            Txt2ImgRequest(
-                model_name="dreamshaper_7_77036.safetensors",
-                prompt=f"a cute {object_prompt}, masterpiece, best quality, realism",
-                steps=20,
-                height=512,
-                width=512,
-                batch_size=5,
-            )
-        )
-        images = [Image.open(BytesIO(b)) for b in res.data.imgs_bytes]
-        for image in images:
-            background.paste(image, (x, y))
-            background.save("normal.jpeg")
-            # 更新位置计数器
-            x += 512  # 向右移动一个图像的宽度
-            if x >= 512 * 10:  # 如果一行已满，换到下一行
-                x = 0
-                y += 512
-
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "normal":
-            test_normal_txt2img()
-        else:
-            test_lcm_txt2img()
-```
-### make-photo
-```python
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
-import os
-from novita_client import NovitaClient, MakePhotoLoRA
-import base64
-
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-res = client.make_photo(
-    model_name="sd_xl_base_1.0.safetensors",
-    prompt="anime artwork man img, portrait. anime style, key visual, vibrant, studio anime, highly detailed",
-    negative_prompt="wrong, photo, deformed, black and white, realism, disfigured, low contrast",
-    images=[
-        "../testdataset/portrait2image/7.jpg"
-    ],
-    loras=[
-        MakePhotoLoRA(
-            model_name="sdxl_wrong_lora",
-            strength=0.8
-        )
-    ],
-    steps=25,
-    guidance_scale=5,
-    image_num=1,
-    strength=0.3,
-    seed=1024,
-)
-
-
-for idx in range(len(res.images_encoded)):
-    with open(f"make_photo_{idx}.png", "wb") as f:
-        f.write(base64.b64decode(res.images_encoded[idx]))
-```
 ### merge-face
 ```python
 import os
@@ -434,27 +234,14 @@ from novita_client.utils import base64_to_image
 
 client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 res = client.merge_face(
-    image="https://www.wgm8.com/wp-content/uploads/2016/06/images_wgm_online-only_Gaming_2016_30-06-16-1.jpg",
-    face_image="https://p7.itc.cn/images01/20220220/285669b5682540a8a307a87d8745f530.jpeg",
+    image="https://toppng.com/uploads/preview/cut-out-people-png-personas-en-formato-11563277290kozkuzsos5.png",
+    face_image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDy7sXtuvCNUQoQZvTbLRbX6qK9_kP3PlQfg&s",
+    enterprise_plan=False,
 )
 
 base64_to_image(res.image_file).save("./merge_face.png")
 ```
-### mixpose
-```python
-import os
 
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.mixpose(
-    image="https://image.uniqlo.com/UQ/ST3/my/imagesgoods/455359/item/mygoods_23_455359.jpg?width=494",
-    pose_image="https://image.uniqlo.com/UQ/ST3/ca/imagesgoods/455359/item/cagoods_02_455359.jpg?width=494",
-)
-
-base64_to_image(res.image_file).save("./mixpose.png")
-```
 ### model-search
 ```python
 #!/usr/bin/env python
@@ -488,6 +275,7 @@ client.models().\
     filter_by_nsfw(False).\
     filter_by_civitai_tags('anime')
 ```
+
 ### outpainting
 ```python
 import os
@@ -505,6 +293,7 @@ res = client.outpainting(
 )
 base64_to_image(res.image_file).save("./outpainting.png")
 ```
+
 ### reimagine
 ```python
 import os
@@ -519,6 +308,7 @@ res = client.reimagine(
 
 base64_to_image(res.image_file).save("./reimagine.png")
 ```
+
 ### remove-background
 ```python
 import os
@@ -532,6 +322,7 @@ res = client.remove_background(
 )
 base64_to_image(res.image_file).save("./remove_background.png")
 ```
+
 ### remove-text
 ```python
 import os
@@ -546,6 +337,7 @@ res = client.remove_text(
 
 base64_to_image(res.image_file).save("./remove_text.png")
 ```
+
 ### replace-background
 ```python
 import os
@@ -560,7 +352,8 @@ res = client.replace_background(
 )
 base64_to_image(res.image_file).save("./replace_background.png")
 ```
-### replace-object
+
+### restore-face
 ```python
 import os
 
@@ -568,29 +361,14 @@ from novita_client import NovitaClient
 from novita_client.utils import base64_to_image
 
 client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.replace_object(
-    image="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
-    object_prompt="a dog",
-    prompt="a cute cat"
-)
-base64_to_image(res.image_file).save("./replace_object.png")
+res = client.restore_face(
+    image="https://xintao-gfpgan.hf.space/file=/home/user/app/lincoln.jpg",
+    fidelity=0.5,#The fidelity of the original portrait, on a scale from 0 to 1.0, with higher scores indicating better fidelity. Range: [0, 1]
+    enterprise_plan=False
+    )
+base64_to_image(res.image_file).save("./restore_face.png")
 ```
-### replace-sky
-```python
-import os
 
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.replace_sky(
-    image="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/16/a6/88/con-la-primavera-in-giappone.jpg?w=700",
-    sky="galaxy"
-)
-
-
-base64_to_image(res.image_file).save("./replace_sky.png")
-```
 ### txt2img-with-hiresfix
 ```python
 import os
@@ -622,6 +400,7 @@ res = client.txt2img_v3(
 
 base64_to_image(res.images_encoded[0]).save("./txt2img_with_hiresfix.png")
 ```
+
 ### txt2img-with-lora
 ```python
 #!/usr/bin/env python
@@ -681,6 +460,7 @@ res2 = client.txt2img_v3(
 
 make_image_grid([base64_to_image(res1.images_encoded[0]), base64_to_image(res2.images_encoded[0])], 1, 2, 512).save("./txt2img-lora-compare.png")
 ```
+
 ### txt2img-with-refiner
 ```python
 import os
@@ -747,4 +527,33 @@ r3 = client.txt2img_v3(
 
 
 make_image_grid([base64_to_image(r1.images_encoded[0]), base64_to_image(r2.images_encoded[0]), base64_to_image(r3.images_encoded[0])], 1, 3, 1024).save("./txt2img-refiner-compare.png")
+```
+
+### txt2video
+```python
+import os
+
+from novita_client import NovitaClient
+from novita_client.utils import save_image
+
+client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
+res = client.txt2video(
+        model_name = "dreamshaper_8_93211.safetensors",
+        prompts = [{
+                    "prompt": "A girl, baby, portrait, 5 years old",
+                    "frames": 16,},
+                    {
+                    "prompt": "A girl, child, portrait, 10 years old",
+                    "frames": 16,
+                    }
+                    ],
+        steps = 20,
+        guidance_scale = 10,
+        height = 512,
+        width = 768,
+        clip_skip = 4,
+        negative_prompt = "a rainy day",
+        response_video_type = "mp4",
+    )
+save_image(res.video_bytes[0], 'output.mp4')
 ```

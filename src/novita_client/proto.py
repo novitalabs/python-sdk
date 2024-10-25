@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Union, Any
-import os
-from PIL import Image
-from .serializer import JSONe
-from enum import Enum
-from .utils import batch_download_images
 import base64
+import os
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
+from PIL import Image
+
+from .serializer import JSONe
+from .utils import batch_download_images
 
 # --------------- ControlNet ---------------
 
