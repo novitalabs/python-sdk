@@ -23,12 +23,10 @@ pip install novita-client
 - [instantid](./examples/instantid.py)
 - [merge-face](./examples/merge-face.py)
 - [model-search](./examples/model-search.py)
-- [outpainting](./examples/outpainting.py)
 - [reimagine](./examples/reimagine.py)
 - [remove-background](./examples/remove-background.py)
 - [remove-text](./examples/remove-text.py)
 - [replace-background](./examples/replace-background.py)
-- [restore-face](./examples/restore-face.py)
 - [txt2img-with-hiresfix](./examples/txt2img-with-hiresfix.py)
 - [txt2img-with-lora](./examples/txt2img-with-lora.py)
 - [txt2img-with-refiner](./examples/txt2img-with-refiner.py)
@@ -276,24 +274,6 @@ client.models().\
     filter_by_civitai_tags('anime')
 ```
 
-### outpainting
-```python
-import os
-
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.outpainting(
-    image="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
-    width=910,
-    height=512,
-    center_x=0,
-    center_y=0,
-)
-base64_to_image(res.image_file).save("./outpainting.png")
-```
-
 ### reimagine
 ```python
 import os
@@ -351,22 +331,6 @@ res = client.replace_background(
     prompt="in living room, Christmas tree",
 )
 base64_to_image(res.image_file).save("./replace_background.png")
-```
-
-### restore-face
-```python
-import os
-
-from novita_client import NovitaClient
-from novita_client.utils import base64_to_image
-
-client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-res = client.restore_face(
-    image="https://xintao-gfpgan.hf.space/file=/home/user/app/lincoln.jpg",
-    fidelity=0.5,#The fidelity of the original portrait, on a scale from 0 to 1.0, with higher scores indicating better fidelity. Range: [0, 1]
-    enterprise_plan=False
-    )
-base64_to_image(res.image_file).save("./restore_face.png")
 ```
 
 ### txt2img-with-hiresfix

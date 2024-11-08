@@ -38,29 +38,6 @@ def test_cleanup():
         os.makedirs(test_path)
     base64_to_image(res.image_file).save(os.path.join(test_path, "test_cleanup.png"))
 
-
-def test_outpainting():
-    client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
-
-    res = client.outpainting(
-        image="https://raw.githubusercontent.com/CompVis/latent-diffusion/main/data/inpainting_examples/overture-creations-5sI6fQgYIuo.png",
-        width=910,
-        height=512,
-        center_x=0,
-        center_y=0,
-    )
-
-    assert (res.image_file is not None)
-
-    test_path = os.path.join(os.path.abspath(
-        os.path.dirname(__name__)), "tests/data")
-
-    if not os.path.exists(test_path):
-        os.makedirs(test_path)
-
-    base64_to_image(res.image_file).save(os.path.join(test_path, f"test_outpainting.{res.image_type}"))
-
-
 def test_remove_background():
     client = NovitaClient(os.getenv('NOVITA_API_KEY'), os.getenv('NOVITA_API_URI', None))
 
