@@ -142,30 +142,6 @@ class NovitaClient:
 
         return CleanupResponse.from_dict(self._post('/v3/cleanup', request.to_dict()))
 
-    def outpainting(self, image: InputImage, width=None, height=None, center_x=None, center_y=None, response_image_type=None, enterprise_plan: bool=None) -> OutpaintingResponse:
-        image_b64 = input_image_to_base64(image)
-        request = OutpaintingRequest(image_file=image_b64)
-        if width is not None:
-            request.width = width
-        if height is not None:
-            request.height = height
-        if center_x is not None:
-            request.center_x = center_x
-        if center_y is not None:
-            request.center_y = center_y
-
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-
-        request.set_image_type(self._default_response_image_type)
-        return OutpaintingResponse.from_dict(self._post('/v3/outpainting', request.to_dict()))
-
     def remove_background(self, image: InputImage, response_image_type=None, enterprise_plan: bool=None) -> RemoveBackgroundResponse:
         image_b64 = input_image_to_base64(image)
         request = RemoveBackgroundRequest(image_file=image_b64)
@@ -265,36 +241,6 @@ class NovitaClient:
         final_res = self.wait_for_task_v3(res.task_id)
         final_res.download_videos()
         return final_res
-    
-    def async_img2video_motion(self,image_assets_id:str,motion_assets_id:str,seed:int=None,response_video_type:str=None,enterprise_plan: bool=None) -> Img2VideoMotionResponse:
-        request = Img2VideoMotionRequest(image_assets_id=image_assets_id,motion_assets_id=motion_assets_id,seed=seed)
-        if response_video_type is not None:
-            request.set_video_type(response_video_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return Img2VideoMotionResponse.from_dict(self.post('/v3/async/img2video-motion',request.to_dict()))
-
-    def img2video_motion(self,image_assets_id:str,motion_assets_id:str,seed:int=None,set_video_type:str=None,enterprise_plan: bool=None) -> Img2VideoMotionResponse:
-        res: Img2VideoMotionResponse = self.async_img2video_motion(image_assets_id,motion_assets_id,seed,set_video_type,enterprise_plan)
-        final_res = self.wait_for_task_v3(res.task_id)
-        return final_res
-
-    def restore_face(self, image: InputImage, fidelity=None, response_image_type=None, enterprise_plan=None) -> RestoreFaceResponse:
-        image_b64 = input_image_to_base64(image)
-        request = RestoreFaceRequest(image_file=image_b64)
-        if fidelity is not None:
-            request.fidelity = fidelity
-        if response_image_type is None:
-            request.set_image_type(self._default_response_image_type)
-        else:
-            request.set_image_type(response_image_type)
-        if enterprise_plan is not None:
-            request.set_enterprise_plan(enterprise_plan)
-        else:
-            request.set_enterprise_plan(False)
-        return RestoreFaceResponse.from_dict(self._post('/v3/restore-face', request.to_dict()))
 
     def raw_inpainting(self, req: InpaintingRequest, extra: CommonV3Extra = None) -> InpaintingResponse:
         _req = CommonV3Request(request=req, extra=extra)

@@ -464,31 +464,6 @@ class CleanupResponse(JSONe):
 
 InputImage = Union[str, os.PathLike, Image.Image]
 
-# --------------- Outpainting ---------------
-
-
-@dataclass
-class OutpaintingRequest(JSONe):
-    image_file: str
-    width: Optional[int] = 512
-    height: Optional[int] = 512
-    center_x: Optional[int] = 0
-    center_y: Optional[int] = 0
-    extra: Dict = field(default_factory=lambda: dict())
-
-    def set_image_type(self, image_type: str):
-        self.extra['response_image_type'] = image_type
-    
-    def set_enterprise_plan(self, enterprise_plan: bool):
-        self.extra.setdefault('enterprise_plan', {})
-        self.extra['enterprise_plan']['enabled'] = enterprise_plan
-
-
-@dataclass
-class OutpaintingResponse(JSONe):
-    image_file: str
-    image_type: str
-
 # --------------- Remove Background ---------------
 
 
@@ -1380,46 +1355,6 @@ class InstantIDRequest(JSONe):
     def set_enterprise_plan(self, enterprise_plan: bool):
         self.extra.setdefault('enterprise_plan', {})
         self.extra['enterprise_plan']['enabled'] = enterprise_plan
-
-
-# --------------- Instant Style ---------------
-InstantStyleLoRA = MakePhotoLoRA
-InstantStyleEmbedding = LCMEmbedding
-
-
-
-@dataclass
-class InstantStyleRequest(JSONe):
-    ref_image_assets_id: str
-    prompt: str
-    model_name: str
-    height: int
-    width: int
-    image_num: int
-    steps: int
-    guidance_scale: float
-    sampler_name: str
-    model_name: str
-    source_image_assets_id: str = None
-    negative_prompt: str = None
-    style_mode: int = 1
-    clip_skip: int = None
-    loras: List[InstantStyleLoRA] = None
-    embeddings: List[InstantStyleEmbedding] = None
-    source_image_conditioning_scale: float = 0.5
-    seed: int = -1
-    extra: Dict = field(default_factory=lambda: dict())
-
-    def set_image_type(self, image_type: str):
-        self.extra['response_image_type'] = image_type
-    
-    def set_enterprise_plan(self, enterprise_plan: bool):
-        self.extra.setdefault('enterprise_plan', {})
-        self.extra['enterprise_plan']['enabled'] = enterprise_plan
-    
-@dataclass
-class InstantStyleResponse(JSONe):
-    task_id: str
 
 # --------------- Common V3 ---------------
 
